@@ -1,7 +1,7 @@
 
 // ------- Fonction pour récupérer les données de l'API
 async function recup(){
-    const listProducts = await fetch('/api/products').then(r => r.json());    
+    const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json());    
     return listProducts
 }
 
