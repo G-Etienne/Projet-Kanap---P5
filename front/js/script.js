@@ -8,7 +8,7 @@ async function recup(){
 // ------ Fonction pour crée les éléments html de la page d'acceuil.
 // ------ La fonction va prendre chaques élément du tableau retourné par l'API
 // ------ et créer un bloc de présentation pour chaques produit.
-async function create(){
+async function main(){
     //liste des produits
     const donneesApi = await recup();
     //recupération du noeud
@@ -50,8 +50,5 @@ async function create(){
 
 } 
 
-// ---- fonction d'appel principale
-function main(){
-    create()
-}
+
 main()

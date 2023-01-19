@@ -43,21 +43,24 @@ function storageItem(choicecol, choiceQtt, theIdd){
     //creation d'un objet à envoyer au localStorage
     let choiceOfUser = {
         id : theIdd,
-        colorProduct : choicecol,
-        quantityProduct : parseInt(choiceQtt),
+        color : choicecol,
+        quantity : parseInt(choiceQtt),
     };
     
     //récupération du localStorage
     let recuperation = JSON.parse(localStorage.getItem('basket'));   
 
 
-    if (recuperation){
+    if (recuperation && choiceOfUser.quantity != 0 && choiceOfUser.color != ""){
         recuperation.push(choiceOfUser)
         localStorage.setItem('basket', JSON.stringify(recuperation))
     }else{
-        recuperation = [];
-        recuperation.push(choiceOfUser)
-        localStorage.setItem('basket', JSON.stringify(recuperation))
+        if (choiceOfUser.quantity != 0 && choiceOfUser.color != "") {
+        
+            recuperation = [];
+            recuperation.push(choiceOfUser)
+            localStorage.setItem('basket', JSON.stringify(recuperation))}
+
     }
     
 }
