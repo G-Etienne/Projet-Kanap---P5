@@ -64,6 +64,35 @@ function storageItem(choicecol, choiceQtt, theIdd){
     }
     
 }
+// Fonction qui vérifie si le nombre maximume est déja atteint 
+function maximum(color, id, quantity){ 
+
+    let storage =JSON.parse(localStorage.getItem('basket'));
+    
+    let quanti = 0; 
+
+    if (storage){
+        
+        storage.forEach(element => {
+        
+            if (element.color === color && element.id === id){
+    
+                quanti = quanti + element.quantity;
+    
+            }
+    
+        });
+
+        //vérifie si le produit a pas déjà atteint le max autoriser 
+        if (parseInt(quanti) + parseInt(quantity) > 100){
+            let quantityToCompare = parseInt(quanti);
+            return quantityToCompare
+
+        }
+
+    }
+
+}
 
 // --------- Fonction qui retourne la quantité et la couleur choisi
 function choiceUser(colorValue, quantityValue, idUser){
@@ -71,11 +100,65 @@ function choiceUser(colorValue, quantityValue, idUser){
 
     //partie choix quantité et couleur 
     btnAddBasket.addEventListener('click', (e) => {
-        const choiceColor = colorValue.value;
-        const choiceQuantity = quantityValue.value;
         
-        storageItem(choiceColor, choiceQuantity, idUser)
+        let choiceColor = colorValue.value;
+        let isAlreadyMax = maximum(colorValue.value, idUser, quantityValue.value);
 
+        let choiceQuantity;
+        if (isAlreadyMax + parseInt(quantityValue.value) > 100){
+
+            let numberAwload =  100 - isAlreadyMax; 
+
+            window.alert("Vous dépasser le nombre d'articles autorisés pour ce modèle. nombre d'article autorisé restant : " + numberAwload)
+
+        }else{
+
+            if (quantityValue.value <= 0){
+
+                if (window.confirm("Vous n'avez pas sélectionné d'article. Voulez-vous ajouter 1 article ?")){
+                    if (choiceColor == ""){
+
+                        window.alert('Veulliez sélectionner une couleur.')
+            
+                    }else{
+
+                        choiceQuantity = 1;
+                        storageItem(choiceColor, choiceQuantity, idUser)
+                    }
+                    
+                }
+
+            }else if (quantityValue.value > 100){
+
+                if (window.confirm("Le nombre maximum d'articles autorisés est de 100 par modèles. Voulez-vous ajoutez 100 articles ?")){
+                        
+                    if (choiceColor == ""){
+
+                        window.alert('Veulliez sélectionner une couleur.')
+            
+                    }else{
+
+                        choiceQuantity = 100;
+                        storageItem(choiceColor, choiceQuantity, idUser)
+                    }
+                
+                }
+
+            }else if (choiceColor == ""){
+
+                window.alert('Veulliez sélectionner une couleur.')
+
+            }
+            else{
+
+                choiceColor = colorValue.value;
+                choiceQuantity = quantityValue.value;
+
+                storageItem(choiceColor, choiceQuantity, idUser)
+
+            }
+        }
+        
     });
 
 }
@@ -160,5 +243,5 @@ async function main(){
     construction(imageUrlOfProduct, altTxtOfProducts, nameOfProduct, priceOfProduct, descriptionOfProduct, colorOfProduct, idOfProduct)
 
 }
-
 main()
+

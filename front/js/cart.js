@@ -1,3 +1,4 @@
+
 //fonction qui renvoie une objet
 function newObjetc(idd, colorPro, quantityProd){
 
@@ -103,8 +104,18 @@ async function quantity(){
 
                 quantityOfThis = quantityOfThis + e.quantity;
 
+                if(quantityOfThis < 0 ){
+
+                    quantityOfThis = 1;
+    
+                }else if(quantityOfThis > 100 ){
+    
+                    quantityOfThis = 100;
+    
+                }
+
             }
-            
+
         });
 
         // création d'un objet avec la quantité ajouter 
@@ -116,9 +127,19 @@ async function quantity(){
     
     //retourne une liste d'élément avec un id et/ou une couleur différents 
     //des autres et un cumule des quantité.
-    //console.log(lastListForBasket)
     return lastListForBasket
 
+
+}
+// constuction total produit 
+function numberAndPriceProducts(theQuantity, price){
+      
+
+    const quantityTotal = document.querySelector('#totalQuantity')
+    quantityTotal.innerText = theQuantity;
+
+    const priceTotal = document.querySelector('#totalPrice')
+    priceTotal.innerText = price;
 
 }
 
@@ -128,46 +149,94 @@ async function eventQuantity(placeInput, oneId, oneColor){
 
     placeInput.addEventListener('click', e => {
 
-        let quantityChange = placeInput.value;
-        let newList = [];
+        let quantityChange = parseInt(placeInput.value);
 
-        let storage = JSON.parse(localStorage.getItem('order'));
-        storage.forEach(ele => {
-            ele.forEach(element => {
-                
-                if (element.id ===  oneId && element.color === oneColor){
+        if (quantityChange > 100){
 
-                    const newElement = newObjetc(oneId, oneColor, parseInt(quantityChange))
-                    newList.push(newElement)
+            window.alert("Vous avez dépasser le nombre d'articles autorisés pour ce modèle. Nombres autorisés maximal : 100")
 
-                }else{
+        }else if (quantityChange <= 0){
 
-                    const newElement = newObjetc(element.id, element.color, element.quantity)
-                    newList.push(newElement)
+            window.alert("Le nombre minimal requis pour commander ce modèle est de : 1. Si vous ne voulez plus commander ce produit, appuyer sur Supprimer.")
+
+        }else if (quantityChange <= 100){
+            let newList = [];
+
+            let storage = JSON.parse(localStorage.getItem('order'));
+            storage.forEach(ele => {
+                ele.forEach(element => {
                     
+                    if (element.id ===  oneId && element.color === oneColor){
 
-                }
+                        const newElement = newObjetc(oneId, oneColor, quantityChange)
+                        newList.push(newElement)
 
-            });  
-        }); 
-        storage = [];
-        storage.push(newList)
+                    }else{
 
-        localStorage.removeItem('basket')
-        localStorage.setItem('basket', JSON.stringify(newList))
+                        const newElement = newObjetc(element.id, element.color, element.quantity)
+                        newList.push(newElement)
+                        
 
-        localStorage.removeItem('order')
-        localStorage.setItem('order', JSON.stringify(storage))
+                    }
 
-        
-        location.reload()
+                });  
+            }); 
+            storage = [];
+            storage.push(newList)
+
+            localStorage.removeItem('basket')
+            localStorage.setItem('basket', JSON.stringify(newList))
+
+            localStorage.removeItem('order')
+            localStorage.setItem('order', JSON.stringify(storage))
+            
+            location.reload()
+        }
     
     });
     
 }
 
 //Fonction événement suppréssion
+async function eventDelete(placeInput, oneId, oneColor){
+    
 
+    placeInput.addEventListener('click', e => {
+
+        let storage = JSON.parse(localStorage.getItem('basket'));
+
+        const alert = window.confirm("Voulez-vous réellement supprimer cet article ?");
+
+        const newList = [];
+        
+        if (alert){
+
+            storage.forEach(element => {
+               //console.log(element)
+                
+                if (element.color != oneColor || element.id != oneId){
+                    
+                    newList.push(element)
+                    
+                }
+
+            });
+            storage = [];
+            storage.push(newList)
+
+            localStorage.removeItem('basket')
+            localStorage.setItem('basket', JSON.stringify(newList))
+
+            localStorage.removeItem('order')
+            localStorage.setItem('order', JSON.stringify(storage))
+
+            location.reload()
+
+        }
+    
+    });
+    
+}
 
 
 //Fonction pour construire les éléments de la page 
@@ -234,7 +303,7 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     const quantityTxt = document.createElement('p');
     quantityTxt.innerText = 'Qté : ';
     divQuantity.append(quantityTxt)
-
+    
     const quantityInput = document.createElement('input');
     quantityInput.setAttribute('type', 'number')
     quantityInput.setAttribute('class', 'itemQuantity')
@@ -258,19 +327,7 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     divInputs.append(btnDelete)
 
     //Fonction evenement suppression 
-
-}
-
-
-// constuction total produit 
-function numberAndPriceProducts(theQuantity, price){
-      
-
-    const quantityTotal = document.querySelector('#totalQuantity')
-    quantityTotal.innerText = theQuantity;
-
-    const priceTotal = document.querySelector('#totalPrice')
-    priceTotal.innerText = price;
+    eventDelete(btnDelete, theIdd, color)
 
 }
 
@@ -317,12 +374,8 @@ async function findElementToShow(){
         });
 
     });
-
-
-    
+  
     numberAndPriceProducts(quantityTotal, priceTotal)
-
-
 
 }
 
@@ -331,7 +384,37 @@ async function findElementToShow(){
 
 async function main(){
 
-    putStorage()
+    const storage = JSON.parse(localStorage.getItem('basket'));
+
+    const prenom = document.querySelector('#firstName');
+     
+    
+    prenom.addEventListener('click', e => {
+
+        if ( !prenom.value ){
+
+            prenom.setAttribute('placeholder','Vous devez renseigner votre prénom.')
+            
+            console.log(prenom.value)
+
+        } 
+
+    })
+    
+    if (storage && storage.length > 0){
+
+        putStorage()
+        
+
+    }else {
+
+        // window.alert('Votre panier est vide.')
+        // localStorage.removeItem('order')
+        // localStorage.removeItem('basket')
+
+    }
+
+   
 
 }
 
