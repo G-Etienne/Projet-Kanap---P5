@@ -212,7 +212,6 @@ async function eventDelete(placeInput, oneId, oneColor){
         if (alert){
 
             storage.forEach(element => {
-               //console.log(element)
                 
                 if (element.color != oneColor || element.id != oneId){
                     
@@ -236,6 +235,53 @@ async function eventDelete(placeInput, oneId, oneColor){
     
     });
     
+}
+
+
+//Fonction pour afficher chaque élément par model 
+async function findElementToShow(){
+
+    //récupération des produits en vente 
+    const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json()); 
+
+    //récupération des commandes 
+    const ListOrders = JSON.parse(localStorage.getItem('order'));
+
+    //création d'une boucle qui va comparer chaque commandes 
+    //avec les produits à la vente 
+    //et les afficher si un produit si trouve
+
+    
+    let quantityTotal = 0;
+    let priceTotal = 0;
+
+    listProducts.forEach(element => {
+        
+        ListOrders.forEach(e => {
+            
+            e.forEach(ele => {
+                
+                if(element._id === ele.id){
+
+                    priceTotal += element.price * ele.quantity;
+                    
+                    quantityTotal += ele.quantity;
+
+                    contructor(element.imageUrl, element.name, ele.color, element.price, ele.quantity, element.altTxt , element._id)
+    
+    
+                }
+
+            });
+            
+            
+
+        });
+
+    });
+  
+    numberAndPriceProducts(quantityTotal, priceTotal)
+
 }
 
 
@@ -313,6 +359,7 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     quantityInput.setAttribute('value', theQuantity)
     divQuantity.append(quantityInput)
 
+
     //Fonction evenement quantité
     eventQuantity(quantityInput ,theIdd, color)
 
@@ -329,88 +376,24 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     //Fonction evenement suppression 
     eventDelete(btnDelete, theIdd, color)
 
-}
-
-
-
-//Fonction pour afficher chaque élément par model 
-async function findElementToShow(){
-
-    //récupération des produits en vente 
-    const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json()); 
-
-    //récupération des commandes 
-    const ListOrders = JSON.parse(localStorage.getItem('order'));
-
-    //création d'une boucle qui va comparer chaque commandes 
-    //avec les produits à la vente 
-    //et les afficher si un produit si trouve
-
     
-    let quantityTotal = 0;
-    let priceTotal = 0;
-
-    listProducts.forEach(element => {
-        
-        ListOrders.forEach(e => {
-            
-            e.forEach(ele => {
-                
-                if(element._id === ele.id){
-
-                    priceTotal += element.price * ele.quantity;
-                    
-                    quantityTotal += ele.quantity;
-
-                    contructor(element.imageUrl, element.name, ele.color, element.price, ele.quantity, element.altTxt , element._id)
-    
-    
-                }
-
-            });
-            
-            
-
-        });
-
-    });
-  
-    numberAndPriceProducts(quantityTotal, priceTotal)
 
 }
 
-
-
-
-async function main(){
-
+async function basket(){
+    
     const storage = JSON.parse(localStorage.getItem('basket'));
-
-    const prenom = document.querySelector('#firstName');
-     
-    
-    prenom.addEventListener('click', e => {
-
-        if ( !prenom.value ){
-
-            prenom.setAttribute('placeholder','Vous devez renseigner votre prénom.')
-            
-            console.log(prenom.value)
-
-        } 
-
-    })
     
     if (storage && storage.length > 0){
 
         putStorage()
-        
+        eventFormulary()
 
     }else {
 
-        // window.alert('Votre panier est vide.')
-        // localStorage.removeItem('order')
-        // localStorage.removeItem('basket')
+        window.alert('Votre panier est vide.')
+        localStorage.removeItem('order')
+        localStorage.removeItem('basket')
 
     }
 
@@ -418,4 +401,212 @@ async function main(){
 
 }
 
-main()
+//Fonction qui récupére la liste des id de la commande
+function idOrders(){
+
+    //liste des id de la commande
+    let listOfId = [];
+
+    //Récupération du LocalStorage
+    const storage = JSON.parse(localStorage.getItem('order'));
+
+    storage.forEach(element => {
+        
+        element.forEach(ele => {
+            
+            let findId = listOfId.find(e => e === ele.id);
+            if (!findId){
+
+                listOfId.push(ele.id)
+
+            }
+
+        });
+
+    });
+
+    return listOfId
+
+}
+
+
+
+
+function verifFormulary(){
+
+    //Elements du formulaire 
+
+    const firstName = document.querySelector('#firstName');
+    const firstNameError = document.querySelector('#firstNameErrorMsg')
+    const lastName = document.querySelector('#lastName');
+    const lastNameeError = document.querySelector('#lastNameErrorMsg')
+    const address = document.querySelector('#address');
+    const addressError = document.querySelector('#addressErrorMsg')
+    const city = document.querySelector('#city');
+    const cityError = document.querySelector('#cityErrorMsg')
+    const email = document.querySelector('#email');
+    const emailError = document.querySelector('#emailErrorMsg')
+
+    //regex pour nom et prénom
+    const regexNames = (value) => {
+
+        return  /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,50}$/i.test(value)
+
+    };
+
+    //regex pour une adresse française, code postal et nom de rue 
+    const regexAddress = (value) => {
+
+        return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ ]+$/.test(value)
+
+    };
+
+    //regex pour une ville 
+    const regexCity = (value) => {
+
+        return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]+$/i.test(value)
+
+    };
+
+    //regex pour un email
+    const regexEmail = (value) => {
+
+        return  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value)
+
+    };
+
+   
+
+        let contact = {
+
+            firstName : firstName.value,
+            lastName : lastName.value,
+            address : address.value,
+            city : city.value,
+            email : email.value
+    
+        };
+
+     
+    
+    if(regexNames(firstName.value) && firstName.value != ""){
+
+        contact.firstName = firstName.value;
+        firstNameError.innerHTML = "";
+
+    }else{
+        firstNameError.innerHTML = "Veuillez entrer un prénom valide. <br/>Ex : Anna, jean-jaques, raïssa, etc";
+        
+    }
+
+    if(regexNames(lastName.value) && lastName.value != ""){
+
+        contact.lastName = lastName.value;
+        lastNameeError.innerHTML = "";
+
+    }else{
+        lastNameeError.innerHTML = "Veuillez entrer un nom valide. <br/>Ex : Chirac, Macron, Dali, etc...";
+    }
+    
+    if(regexAddress(address.value)){
+
+        contact.address = address.value;
+        addressError.innerHTML = "";
+
+    }else{
+        addressError.innerHTML = "Veuillez entrer une adesse valide. <br/>Ex : 75000 rue du paradis";
+    }
+    
+    if(regexCity(city.value)){
+
+        contact.city = city.value;
+        cityError.innerHTML = "";
+
+    }else{
+        cityError.innerHTML = "Veuillez entrer une ville valide. <br/>Ex : New-York, Paris, Barcelone, etc ...";
+    }
+    
+    if(regexEmail(email.value)){
+
+        contact.email = email.value;
+        emailError.innerHTML = "";
+
+    }else{
+        emailError.innerHTML = "Veuillez entrer une adresse mail valide. <br/>Ex : mon-mail@email.com";
+    }
+    if (regexNames(contact.firstName) && regexNames(contact.lastName) && regexAddress(contact.address) && regexCity(contact.city) && regexEmail(contact.email)){
+        return contact
+
+    }else{
+        
+        return false
+        
+    }
+   
+    
+
+}
+
+function idReturn(resp){
+    
+    let idToSend = "/front/html/confirmation.html?id=" +JSON.stringify(resp.orderId);
+    document.location.href=idToSend;
+    
+
+}
+
+
+
+async function post(thingToSend){
+
+    await fetch('http://localhost:3000/api/products/order', {
+        method: 'POST',
+        headers: {
+            "Accept" : "application/json",
+            "Content-Type" : "application/json"
+
+        },
+        body: JSON.stringify(thingToSend),
+    })
+    .then(res => res.json())
+    .then(data => idReturn(data))
+}
+
+
+
+async function eventFormulary(){
+
+    //liste des id 
+    const productsId = idOrders();
+    
+    //Bouton pour l'envoie du formulaire 
+    const sendFormulary = document.querySelector('#order');
+    
+
+    sendFormulary.addEventListener('click', async e => {
+        e.preventDefault();
+        
+        const contactToSend = verifFormulary();
+        if (contactToSend){
+            const objetToSend = {
+                contact : contactToSend,
+                products : productsId
+            }
+            post(objetToSend)       
+        }  
+        
+
+        
+        
+    });    
+
+}
+
+
+
+
+
+
+basket()
+
+
