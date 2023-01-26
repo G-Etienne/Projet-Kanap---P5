@@ -1,17 +1,23 @@
+// ------------------------------------- ************************************************************* ---------------------------------------
+//Fonction qui permet de récupérer les données de l'API
+//La fonction envoie une requète avec fetch et récupére la liste des produits disponible pour le site de canapés 
 
-// ------- Fonction pour récupérer les données de l'API
 async function recup(){
     const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json());    
     return listProducts
 }
 
+// ------------------------------------- ************************************************************* ---------------------------------------
 // ------ Fonction pour crée les éléments html de la page d'acceuil.
 // ------ La fonction va prendre chaques élément du tableau retourné par l'API
 // ------ et créer un bloc de présentation pour chaques produit.
+
 async function main(){
     //liste des produits
     const donneesApi = await recup();
-    //recupération du noeud
+
+    //recupération de l'emplacement dans la page html
+    //où ajouter les produits
     const ajoutElements = document.querySelector('.items');
 
     // création de bloc pour chaque élément
@@ -49,6 +55,7 @@ async function main(){
     });
 
 } 
+// ------------------------------------- ************************************************************* ---------------------------------------
 
 
 main()

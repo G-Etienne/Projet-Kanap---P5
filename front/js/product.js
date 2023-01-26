@@ -1,44 +1,20 @@
-
-// ------- Fonction pour récupérer les données de l'API
+// ------------------------------------- ************************************************************* ---------------------------------------
+//Fonction pour récupérer les données de l'API
+//Elle donne la liste des produits du site
 async function recup(){
 
     const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json());    
     return listProducts
-}
-// ------- Fonction pour récupérer l'id dans l'URL
-function IdProduc(){
-
-    const idInUrl = window.location.search;
-    const whatPartOfUrl = new URLSearchParams(idInUrl);
-    const myId = whatPartOfUrl.get('id');
-    
-    return myId
 
 }
 
-// ------- Fonction pour déterminer qu'elle produit afficher
-
-async function whatProduct(){
-
-    const listOfProduct = await recup();
-    const theId = IdProduc();
-    let theElem = [];
-
-    listOfProduct.forEach(element => {
-
-        if (theId == element._id){
-
-            theElem.push(element)
-
-        }
-        
-    });
-    return theElem
-}
-
+// ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction qui envoie les données dans le localStorage
-function storageItem(choicecol, choiceQtt, theIdd){
+//Elle crée un objet à envoyer dans le local storage 
+//Vérifie si la quantité et la couleur sont reseignées 
+//Ajoute le choix au local storage 
 
+function storageItem(choicecol, choiceQtt, theIdd){
 
     //creation d'un objet à envoyer au localStorage
     let choiceOfUser = {
@@ -50,29 +26,38 @@ function storageItem(choicecol, choiceQtt, theIdd){
     //récupération du localStorage
     let recuperation = JSON.parse(localStorage.getItem('basket'));   
 
-
     if (recuperation && choiceOfUser.quantity != 0 && choiceOfUser.color != ""){
+
         recuperation.push(choiceOfUser)
         localStorage.setItem('basket', JSON.stringify(recuperation))
+
     }else{
+
         if (choiceOfUser.quantity != 0 && choiceOfUser.color != "") {
         
             recuperation = [];
             recuperation.push(choiceOfUser)
             localStorage.setItem('basket', JSON.stringify(recuperation))}
 
-    }
-    
+    }  
 }
-// Fonction qui vérifie si le nombre maximume est déja atteint 
+
+// ------------------------------------- ************************************************************* ---------------------------------------
+// ---------- Fonction qui vérifie si le nombre maximume est déja atteint 
+//Elle prend la quantité totale de chaque éléments du local storage 
+//Si la quantité plus la quantité choisi par l'utilisateur  est inférieure à 100
+//Elle retourne un nombre à comparer pour savoir le nombre d'article qui peut encore être commandés
+
 function maximum(color, id, quantity){ 
 
+    //récupération du local Storage
     let storage =JSON.parse(localStorage.getItem('basket'));
     
     let quanti = 0; 
 
     if (storage){
         
+        //Calcul de la quantité totale 
         storage.forEach(element => {
         
             if (element.color === color && element.id === id){
@@ -85,16 +70,25 @@ function maximum(color, id, quantity){
 
         //vérifie si le produit a pas déjà atteint le max autoriser 
         if (parseInt(quanti) + parseInt(quantity) > 100){
+
             let quantityToCompare = parseInt(quanti);
             return quantityToCompare
 
         }
-
     }
-
 }
 
-// --------- Fonction qui retourne la quantité et la couleur choisi
+// ------------------------------------- ************************************************************* ---------------------------------------
+// --------- Fonction qui retourne la quantité et la couleur choisie
+//Elle se déclanche au clique de la souris sur le bouton ajouter au panier 
+//Elle récupére le chois de l'utilisateur pour la couleur 
+//Compare de la quantité choisie pour le produit avec la fonction maximum()
+//Affiche un message d'erreur si le nombre d'article autorisés est dépassé
+//Propose d'ajouter 1 produit si l'utilisateur en choisit 0
+//Propose d'ajouter 100 produit si l'utilisateur en choisit plus de 100
+//Affiche un message d'erreur si la couleur n'est pas choisie
+//Si les choix sont valide renvoie a la fonction StorageItem les valeur à ajouté 
+
 function choiceUser(colorValue, quantityValue, idUser){
     const btnAddBasket = document.querySelector('#addToCart')
 
@@ -103,13 +97,29 @@ function choiceUser(colorValue, quantityValue, idUser){
         
         let choiceColor = colorValue.value;
         let isAlreadyMax = maximum(colorValue.value, idUser, quantityValue.value);
-
         let choiceQuantity;
+
+        //Vérification de la quantité 
         if (isAlreadyMax + parseInt(quantityValue.value) > 100){
 
             let numberAwload =  100 - isAlreadyMax; 
 
             window.alert("Vous dépasser le nombre d'articles autorisés pour ce modèle. nombre d'article autorisé restant : " + numberAwload)
+
+            if (window.confirm("Voulez-vous ajoutez " + numberAwload + " produits ?")){
+                        
+                if (choiceColor == ""){
+
+                    window.alert('Veulliez sélectionner une couleur.')
+        
+                }else{
+
+                    choiceQuantity = numberAwload;
+                    storageItem(choiceColor, choiceQuantity, idUser)
+                    
+                }
+            
+            }
 
         }else{
 
@@ -128,23 +138,9 @@ function choiceUser(colorValue, quantityValue, idUser){
                     
                 }
 
-            }else if (quantityValue.value > 100){
-
-                if (window.confirm("Le nombre maximum d'articles autorisés est de 100 par modèles. Voulez-vous ajoutez 100 articles ?")){
-                        
-                    if (choiceColor == ""){
-
-                        window.alert('Veulliez sélectionner une couleur.')
-            
-                    }else{
-
-                        choiceQuantity = 100;
-                        storageItem(choiceColor, choiceQuantity, idUser)
-                    }
-                
-                }
-
-            }else if (choiceColor == ""){
+            }                
+            //vérification de la couleur
+            else if (choiceColor == ""){
 
                 window.alert('Veulliez sélectionner une couleur.')
 
@@ -157,26 +153,18 @@ function choiceUser(colorValue, quantityValue, idUser){
                 storageItem(choiceColor, choiceQuantity, idUser)
 
             }
-        }
-        
+        }   
     });
-
 }
 
-
+// ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction pour construir les blocs HTML
+//Elle prend en argument les éléments à ajouter
+//Elle construit l'affichage de la page avec ces éléments
 
-function construction(ima, alt, nameprod, pri, desc, col, idd){
+function construction(ima, alt, nameProd, pri, desc, col, idd){
 
-    //element à afficher.
-    const theImage = ima;
-    const theName = nameprod;
-    const thePrice = pri;
-    const theDescription = desc;
-    let theColors = col;
-    let theAltTxt = alt;
-
-    //séléction dess éléments html
+    //séléction de la position des éléments dans le html
     const titleOfPage = document.querySelector('title');
     const imagePlace = document.querySelector('.item__img');
     const namePlace = document.querySelector('#title');
@@ -185,8 +173,8 @@ function construction(ima, alt, nameprod, pri, desc, col, idd){
     const colorsPlace = document.querySelector('#colors');
     const numberPlace = document.querySelector('#quantity');
 
-    //création des options couleurs
-    theColors.forEach(color => {
+    //création des options choix de la couleur couleurs
+    col.forEach(color => {
 
         const option = document.createElement('option');  
         option.setAttribute('value', color)
@@ -195,53 +183,81 @@ function construction(ima, alt, nameprod, pri, desc, col, idd){
         
     });
 
-    // création des élément de présentation
-    titleOfPage.innerText = theName;
+    // création des éléments de présentation
+    titleOfPage.innerText = nameProd;
     
     const imagePart = document.createElement('img');
-    imagePart.setAttribute('src', theImage)
-    imagePart.setAttribute('alt', theAltTxt)
+    imagePart.setAttribute('src', ima)
+    imagePart.setAttribute('alt', alt)
     imagePlace.append(imagePart)
 
-    namePlace.innerText = theName;
+    namePlace.innerText = nameProd;
 
-    pricePlace.innerHTML = thePrice;
+    pricePlace.innerHTML = pri;
 
-    descriptionPlace.innerText = theDescription;
+    descriptionPlace.innerText = desc;
     
     choiceUser(colorsPlace, numberPlace, idd)
 
+}
+
+// ------------------------------------- ************************************************************* ---------------------------------------
+// ------- Fonction pour récupérer l'id dans l'URL
+//Elle récupére l'id du produit à afficher dans l'url de la page
+
+function IdProduc(){
+
+    const idInUrl = window.location.search;
+    const whatPartOfUrl = new URLSearchParams(idInUrl);
+    const myId = whatPartOfUrl.get('id');
+    
+    return myId
 
 }
-// --------- Fonction pour afficher la page avec le bon produit 
+
+// ------------------------------------- ************************************************************* ---------------------------------------
+// ------- Fonction pour déterminer qu'elle produit afficher
+//Elle compare l'id qui se trouve dans l'url aux ids des produits du site
+//Si un id correspond elle retourne l'objet qui contient cet id 
+
+async function whatProduct(){
+
+    const listOfProduct = await recup();
+    const theId = IdProduc();
+    let theElem = [];
+
+    //comparaison de l'id 
+    listOfProduct.forEach(element => {
+
+        if (theId == element._id){
+
+            theElem.push(element)
+
+        }
+        
+    });
+    return theElem
+}
+
+// ------------------------------------- ************************************************************* ---------------------------------------
+// --------- Fonction principale pour afficher la page avec le bon produit 
+//Elle récupére les informations du produit
+//Fait appel à la fonction de construction avec les éléments du porduit
+
 async function main(){
 
     const theProduct = await whatProduct();
     const realProduct = [theProduct[0]];
-
-    //récupération de chaque éléments
-    let colorOfProduct;
-    let idOfProduct;
-    let nameOfProduct;
-    let priceOfProduct;
-    let imageUrlOfProduct;
-    let descriptionOfProduct;
-    let altTxtOfProducts;
-
     
     realProduct.forEach(elem => {
 
-        colorOfProduct = elem.colors; 
-        idOfProduct = elem._id; 
-        nameOfProduct = elem.name; 
-        priceOfProduct = elem.price; 
-        imageUrlOfProduct = elem.imageUrl; 
-        descriptionOfProduct = elem.description; 
-        altTxtOfProducts = elem.altTxt;         
+        construction(elem.imageUrl, elem.altTxt, elem.name, elem.price, elem.description, elem.colors, elem._id)  
 
     });
-    construction(imageUrlOfProduct, altTxtOfProducts, nameOfProduct, priceOfProduct, descriptionOfProduct, colorOfProduct, idOfProduct)
+    
 
 }
+// ------------------------------------- ************************************************************* ---------------------------------------
+
 main()
 
