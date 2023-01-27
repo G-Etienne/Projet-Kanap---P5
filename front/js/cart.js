@@ -472,6 +472,39 @@ async function basket(){
 //---------------------------------------******************** Partie Formulaire ********************** ----------------------------------------------------
 
 // ------------------------------------- ************************************************************* ---------------------------------------
+// ----------- Fonction qui récupére la liste des id de la commande
+//Elle récupére la liste des commandes dans le local storage 
+//Elle crée une liste contenant uniquement les ids différents présent dans la commande
+//Elle retourne la liste d'ids
+
+function idOrders(){
+
+    //liste des id de la commande
+    let listOfId = [];
+
+    //Récupération du LocalStorage
+    const storage = JSON.parse(localStorage.getItem('order'));
+
+    //ajout des ids dans la liste
+    storage.forEach(element => {
+        
+        element.forEach(ele => {
+            
+            let findId = listOfId.find(e => e === ele.id);
+            if (!findId){
+
+                if (typeof ele.id == "string"){
+                    listOfId.push(ele.id)
+                }
+
+            }
+        });
+    });
+
+    return listOfId
+
+}
+// ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui ajoute un id à l'url de la page confirmation et redirige l'utilisateur sur cette page
 //Elle prend en argument les données retourner par l'API aprés l'envoie des données du formulaire
 
@@ -514,23 +547,10 @@ async function post(thingToSend){
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
+// ---------- Fonction qui écoute l'événement d'envoie les données du formulaire, qui récupére les données vérifiées et les envoie
+//Une fois les données vérifiés elle fait appel la fonction post pour envoyer les données à l'API
 
-//créer une fonction de vérification avec oninput 
-
-// ------------------------------------- ************************************************************* ---------------------------------------
-
-// ------------------------------------- ************************************************************* ---------------------------------------
-// ------------ Fonction pour vérifier le formats des données du formulaire 
-//Elle récupére la localistation html des inputs du formulaire et des message d'erreurs
-//Elle crée un objet contact avec les informations remplis dans le formulaire
-//Elle compare ces informations avec les regexs de vérifications
-//Si les données sont valide elle les ajoute dans l'objet contact
-//Sinon elle envoie un message d'erreur
-//Elle revérifie les formats de données 
-//Si le format est valide elle retourne un objet contenant avec les infos 
-//Sinon elle retourne false
-
-function verifFormulary(){
+async function eventFormulary(){
 
     //Elements du formulaire 
     const firstName = document.querySelector('#firstName');
@@ -545,167 +565,113 @@ function verifFormulary(){
     const emailError = document.querySelector('#emailErrorMsg')
 
     //regex pour nom et prénom
-    const regexNames = (value) => {
-
-        return  /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,50}$/i.test(value)
-
-    };
-
+    const regexNames = (value) => { return  /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,50}$/i.test(value) };
     //regex pour une adresse française, code postal et nom de rue 
-    const regexAddress = (value) => {
-
-        return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ ]+$/.test(value)
-
-    };
-
+    const regexAddress = (value) => { return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ ]+$/.test(value) };
     //regex pour une ville 
-    const regexCity = (value) => {
-
-        return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]+$/i.test(value)
-
-    };
-
+    const regexCity = (value) => { return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]+$/i.test(value) };
     //regex pour un email
-    const regexEmail = (value) => {
-
-        return  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value)
-
-    };
-
-    //Objet contact qui seras retourné
-    let contact = {
-
-        firstName : firstName.value,
-        lastName : lastName.value,
-        address : address.value,
-        city : city.value,
-        email : email.value
-
-    };
-  
-    //Vérification de chaque données du formulaire 
-    if(regexNames(firstName.value) && firstName.value != ""){
-
-        contact.firstName = firstName.value;
-        firstNameError.innerHTML = "";
-
-    }else{
-        firstNameError.innerHTML = "Veuillez entrer un prénom valide. <br/>Ex : Anna, jean-jaques, raïssa, etc";
+    const regexEmail = (value) => { return  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) };
+ 
+    //partie vérification des inputs 
+    firstName.addEventListener('input', e => {
         
-    }
+        if (regexNames(firstName.value) && firstName.value != "" && typeof firstName.value == "string"){
+            firstNameError.innerHTML = "";
+        }else{
+            firstNameError.innerHTML = "Veuillez renseigner un prénom valide. <br/> Ex : Anna, Jean-jaque, Philipe, etc ...";
+        }
 
-    if(regexNames(lastName.value) && lastName.value != ""){
-
-        contact.lastName = lastName.value;
-        lastNameeError.innerHTML = "";
-
-    }else{
-        lastNameeError.innerHTML = "Veuillez entrer un nom valide. <br/>Ex : Chirac, Macron, Dali, etc...";
-    }
-    
-    if(regexAddress(address.value)){
-
-        contact.address = address.value;
-        addressError.innerHTML = "";
-
-    }else{
-        addressError.innerHTML = "Veuillez entrer une adesse valide. <br/>Ex : 75000 rue du paradis";
-    }
-    
-    if(regexCity(city.value)){
-
-        contact.city = city.value;
-        cityError.innerHTML = "";
-
-    }else{
-        cityError.innerHTML = "Veuillez entrer une ville valide. <br/>Ex : New-York, Paris, Barcelone, etc ...";
-    }
-    
-    if(regexEmail(email.value)){
-
-        contact.email = email.value;
-        emailError.innerHTML = "";
-
-    }else{
-        emailError.innerHTML = "Veuillez entrer une adresse mail valide. <br/>Ex : mon-mail@email.com";
-    }
-
-    //revérification des données avant le retour et les retours
-    if (regexNames(contact.firstName) && regexNames(contact.lastName) && regexAddress(contact.address) && regexCity(contact.city) && regexEmail(contact.email)){
-        return contact
-
-    }else{
-        
-        return false
-        
-    }
-}
-
-// ------------------------------------- ************************************************************* ---------------------------------------
-// ----------- Fonction qui récupére la liste des id de la commande
-//Elle récupére la liste des commandes dans le local storage 
-//Elle crée une liste contenant uniquement les ids différents présent dans la commande
-//Elle retourne la liste d'ids
-
-function idOrders(){
-
-    //liste des id de la commande
-    let listOfId = [];
-
-    //Récupération du LocalStorage
-    const storage = JSON.parse(localStorage.getItem('order'));
-
-    //ajout des ids dans la liste
-    storage.forEach(element => {
-        
-        element.forEach(ele => {
-            
-            let findId = listOfId.find(e => e === ele.id);
-            if (!findId){
-
-                listOfId.push(ele.id)
-
-            }
-        });
     });
-
-    return listOfId
-
-}
-
-
-// ------------------------------------- ************************************************************* ---------------------------------------
-// ---------- Fonction qui écoute l'événement d'envoie les données du formulaire, qui récupére les données vérifiées et les envoie
-//Une fois les données vérifiés elle fait appel la fonction post pour envoyer les données à l'API
-
-async function eventFormulary(){
-
-    //récupération de la liste des id 
-    const productsId = idOrders();
-    
+    lastName.addEventListener('input', e => {
+        
+        if (regexNames(lastName.value) && lastName.value != "" && typeof lastName.value == "string"){
+            lastNameeError.innerHTML = "";
+        }else{
+            lastNameeError.innerHTML = "Veuillez renseigner un nom valide. <br/> Ex : Chirac, Macron, Dali, etc ...";
+        }
+        
+    });
+    address.addEventListener('input', e => {
+        
+        if (regexAddress(address.value)  && typeof address.value == "string"){
+            addressError.innerHTML = "";
+        }else{
+            addressError.innerHTML = "Veuillez renseigner une adresse valide. <br/> Ex :75000 rue du paradis ...";
+        }
+        
+    });
+    city.addEventListener('input', e => {
+        
+        if (regexCity(city.value) && typeof city.value == "string"){
+            cityError.innerHTML = "";
+        }else{
+            cityError.innerHTML = "Veuillez renseigner une ville valide. <br/> Ex : Chicago, Paris, Bordeaux, etc ...";
+        }
+        
+    });
+    email.addEventListener('input', e => {
+        
+        if (regexEmail(email.value) && typeof email.value == "string"){
+            emailError.innerHTML = "";
+        }else{
+            emailError.innerHTML = "Veuillez renseigner un prénom valide. <br/> Ex : mon-mail@email.com";
+        }
+        
+    });
+   
     //Bouton pour l'envoie du formulaire 
-    const sendFormulary = document.querySelector('#order');
     
-
+    const sendFormulary = document.querySelector('#order');
+            
     sendFormulary.addEventListener('click', async e => {
         e.preventDefault();
-        
-        //récupération de l'objet contact à envoyer 
-        const contactToSend = verifFormulary();
 
-        if (contactToSend){
+        if (regexNames(firstName.value) && typeof firstName.value === "string" && regexNames(lastName.value) && typeof lastName.value === "string" && regexAddress(address.value) && typeof address.value === "string" && regexCity(city.value) && typeof city.value === "string" && regexEmail(email.value) && typeof email.value === "string"){
+            const idToSend = idOrders();
+            let realString = true;
+            
+            idToSend.forEach(e => {
+                if (typeof e != "string"){
+                    realString = false;
+                }else if (realString != false){
+                    realString = true;
+                }
+            });
 
-            //ajout de la liste des id et des infos formulaire dans un seule objet
-            const objetToSend = {
-                contact : contactToSend,
-                products : productsId
+            if (realString && regexNames(firstName.value) && typeof firstName.value === "string" && regexNames(lastName.value) && typeof lastName.value === "string" && regexAddress(address.value) && typeof address.value === "string" && regexCity(city.value) && typeof city.value === "string" && regexEmail(email.value) && typeof email.value === "string"){
+
+                let thingsToSend =  {
+
+                        firstName : firstName.value,
+                        lastName : lastName.value,
+                        address : address.value,
+                        city : city.value,
+                        email : email.value
+
+                    };
+
+                    //ajout de la liste des id et des infos formulaire dans un seule objet
+                    const objetToSend = {
+                        contact : thingsToSend,
+                        products : idToSend
+                    }
+                    //appel de la fonction post avec les données a envoyer en argument
+                    post(objetToSend) 
+                
+            }else{
+
+                throw new Error ("les type de données ne sont pas tous de type string")
+
             }
-
-            //appel de la fonction post avec les données a envoyer en argument
-            post(objetToSend)     
-
-        }         
-    });    
+            
+                
+        }
+    
+    }); 
+          
+    
+    
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
@@ -716,3 +682,89 @@ async function eventFormulary(){
 basket()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Bouton pour l'envoie du formulaire 
+    // const sendFormulary = document.querySelector('#order');
+    
+    // sendFormulary.addEventListener('click', async e => {
+    //     e.preventDefault();
+        
+
+    //     //ajout de la liste des id et des infos formulaire dans un seule objet
+    //     // const objetToSend = {
+    //     //     contact : thingsToSend,
+    //     //     products : productsId
+    //     // }
+    //     //appel de la fonction post avec les données a envoyer en argument
+    //     //post(objetToSend)     
+         
+    // });   
+        
+// ------------------------------------- ************************************************************* ---------------------------------------
+
+// function testForm(){
+
+//     //Point de vérification des inputs
+//     const firstName = document.querySelector('#firstName');
+//     const lastName = document.querySelector('#lastName');
+//     const address = document.querySelector('#address');
+//     const city = document.querySelector('#city');
+//     const email = document.querySelector('#email');
+
+    
+
+//     let eventFirstName = listenInput(firstName);
+//     let eventLastName = listenInput(lastName);
+//     let eventAddress = listenInput(address);
+//     let eventCity = listenInput(city);
+//     let eventEmail = listenInput(email);
+
+// }
+// --------------------------//----------- ************************************************************* ---------------------------------------
+
+// //créer une fonction de vérification avec oninput 
+
+// function verifByRegexAndType(regex, val, error, message){
+
+//     if (regex && val != "") {
+
+//         error.innerHTML = "";
+//         console.log(val)
+//         return val
+
+//     }else{
+
+//         error.innerHTML = message;
+//         return false
+
+//     }
+   
+// }
