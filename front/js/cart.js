@@ -3,8 +3,8 @@
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui ajoute dans la page le nombre total d'article dans le panier et le prix total du panier
 
-function numberAndPriceProducts(theQuantity, price){
-      
+function numberAndPriceProducts(theQuantity, price){  
+
     //ajout du la quantité totale
     const quantityTotal = document.querySelector('#totalQuantity')
     quantityTotal.innerText = theQuantity;
@@ -24,10 +24,14 @@ function numberAndPriceProducts(theQuantity, price){
 //Remplace les listes du locale storage par la nouvelle liste 
 //Recharge la page pour enlever le produit supprimer de la page 
 
-async function eventDelete(placeInput, oneId, oneColor){
+async function eventDelete(placeInput){
     
-
     placeInput.addEventListener('click', e => {
+
+        //récupération de l'id et de la couleur du produit 
+        let donneesArticle = placeInput.closest("#cart__items > article");
+        let dataId = donneesArticle.dataset.id;
+        let dataColor = donneesArticle.dataset.color;
 
         //récupération de la liste des produits
         let storage = JSON.parse(localStorage.getItem('basket'));
@@ -42,23 +46,16 @@ async function eventDelete(placeInput, oneId, oneColor){
             //création d'une nouvelle liste sans l'élément supprimer 
             storage.forEach(element => {
                 
-                if (element.color != oneColor || element.id != oneId){
+                if (element.color != dataColor || element.id != dataId){
                     
                     newList.push(element)
                     
                 }
-
             });
 
-            //remplacement des listes du locale storage par la nouvelle liste
-            storage = [];
-            storage.push(newList)
-
+            //remplacement de la liste dans le local Storage
             localStorage.removeItem('basket')
             localStorage.setItem('basket', JSON.stringify(newList))
-
-            localStorage.removeItem('order')
-            localStorage.setItem('order', JSON.stringify(storage))
 
             //rechargement de la page pour supprimer l'affichage de l'article
             location.reload()
@@ -85,6 +82,7 @@ function newObjetc(idd, colorPro, quantityProd){
         }
     }
 
+    //création de l'objet
     let objetcNew = new ModelForOrder(idd, colorPro, quantityProd)
     return objetcNew
 
@@ -92,17 +90,19 @@ function newObjetc(idd, colorPro, quantityProd){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction pour controler la quantitié d'un produit 
-//Elle prend en argument la position html d'un input, l'id d'un produit et la couleur d'un produit 
-//Elle écoute le clique de la souris sur l'input pout la quantité 
-//Au clique elle vérifie si la quantité n'est pas inférieur ou égale à 0 ou suppérieur à 100
-//Si c'est le cas, elle affiche une alerte
-//Sinon elle créé une nouvelle liste avec la nouvelle quantité assignés au produit 
-//Elle remplace ensuite les listes 'order' et 'basket' du locale storage par cette nouvelle liste
-//Elle recharge la page pour actualiser le totale du prix et des quantité
+//Elle prend la position dans le Dom des inputs quantités 
+//Si les quantités ne sont pas trop basse ou trop haute elle les ajoute au panier 
+//Elle recharge la page pour mettre a jour les totals quantité et prix 
 
-async function eventQuantity(placeInput, oneId, oneColor, valueBase){
+async function eventQuantity(placeInput, valueBase){
     
-    placeInput.addEventListener('click', e => {
+    placeInput.addEventListener('change', e => {
+        e.preventDefault()
+
+        //récupération de l'id et de la couleur du produit 
+        let donneesArticle = placeInput.closest("#cart__items > article");
+        let dataId = donneesArticle.dataset.id;
+        let dataColor = donneesArticle.dataset.color;
 
         //récupération de la nouvelle quantité
         let quantityChange = parseInt(placeInput.value);
@@ -123,23 +123,20 @@ async function eventQuantity(placeInput, oneId, oneColor, valueBase){
             //création d'une nouvelle liste avec la nouvelle quantité du produit 
             let newList = [];
 
-            let storage = JSON.parse(localStorage.getItem('order'));
+            let storage = JSON.parse(localStorage.getItem('basket'));
             storage.forEach(ele => {
-                ele.forEach(element => {
-                    
-                    if (element.id ===  oneId && element.color === oneColor){
+                
+                if (ele.id ===  dataId && ele.color === dataColor){
 
-                        const newElement = newObjetc(oneId, oneColor, quantityChange)
-                        newList.push(newElement)
+                    const newElement = newObjetc(dataId, dataColor, quantityChange)
+                    newList.push(newElement)
 
-                    }else{
+                }else{
 
-                        const newElement = newObjetc(element.id, element.color, element.quantity)
-                        newList.push(newElement)
+                    const newElement = newObjetc(ele.id, ele.color, ele.quantity)
+                    newList.push(newElement)
 
-                    }
-
-                });  
+                }  
             }); 
 
             //remplacement des listes du local storage par la nouvelle liste 
@@ -149,13 +146,11 @@ async function eventQuantity(placeInput, oneId, oneColor, valueBase){
             localStorage.removeItem('basket')
             localStorage.setItem('basket', JSON.stringify(newList))
 
-            localStorage.removeItem('order')
-            localStorage.setItem('order', JSON.stringify(storage))
-            
-            //rechargement de la page pour actualiser le tatale des prix et des quantitées
-            location.reload()
-
         }
+
+        //mise a jours du totale des produits et des prix
+        location.reload()
+
     });
 }
 
@@ -237,7 +232,7 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     divQuantity.append(quantityInput)
 
     //Fonction evenement quantité
-    eventQuantity(quantityInput ,theIdd, color, quantityInput.value)
+    eventQuantity(quantityInput , quantityInput.value)
 
     //partie suppréssion 
     const deletItem = document.createElement('div');
@@ -250,7 +245,7 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     divInputs.append(btnDelete)
 
     //Fonction evenement suppression 
-    eventDelete(btnDelete, theIdd, color)
+    eventDelete(btnDelete)
 
 }
 
@@ -268,7 +263,7 @@ async function findElementToShow(){
     const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json()); 
 
     //récupération des commandes 
-    const ListOrders = JSON.parse(localStorage.getItem('order'));
+    const ListOrders = JSON.parse(localStorage.getItem('basket'));
 
     let quantityTotal = 0;
     let priceTotal = 0;
@@ -279,21 +274,17 @@ async function findElementToShow(){
     listProducts.forEach(element => {
         
         ListOrders.forEach(e => {
-            
-            e.forEach(ele => {
                 
-                if(element._id === ele.id){
+            if(element._id === e.id){
 
-                    //calcul du prix et de la quantité totale
-                    priceTotal += element.price * ele.quantity;
-                    quantityTotal += ele.quantity;
+                //calcul du prix et de la quantité totale
+                priceTotal += element.price * e.quantity;
+                quantityTotal += e.quantity;
 
-                    //appel de la fonction pour construire un élément dans la page html
-                    contructor(element.imageUrl, element.name, ele.color, element.price, ele.quantity, element.altTxt , element._id)
-    
-    
-                }
-            });
+                //appel de la fonction pour construire un élément dans la page html
+                contructor(element.imageUrl, element.name, e.color, element.price, e.quantity, element.altTxt , element._id)
+
+            }
         });
     });
   
@@ -302,134 +293,6 @@ async function findElementToShow(){
 
 }
 
-// ------------------------------------- ************************************************************* ---------------------------------------
-// ---------- Fonction qui retourne un objet avec les paire id/couleur du panier
-//Elle prend les éléments commander dans la clé 'basket' du storage
-//Elle compare chaque élément de 'basket' à un array
-//Si l'élément id/couleur ne se trouve pas dans l'array elle l'ajoute
-//Elle retourne un array contenant la liste des objets pour chaque différentes paire id/couleur
-
-async function findColorModel(){ 
-    
-    //récupération du panier 
-    const storage = JSON.parse(localStorage.getItem('basket'));
-    
-    //liste couleur à afficher 
-    let listOfColors = [];
-
-    storage.forEach(element => {
-
-        //regarde si des éléments avec un id et une couleur simillaire sont déjà présent dans la liste 
-        let findColor = listOfColors.find(e => element.color === e.color && element.id === e.id);
-
-        //si ils ne sont pas présent, les met dans la liste 
-        if (!findColor){
-
-            let listIdColor = newObjetc(element.id, element.color, 0);
-            listOfColors.push(listIdColor)
-
-        }
-        
-    });
-
-    //retourne une liste de d'objet pour chaque élément avec
-    //une id et une couleur différentes
-    return listOfColors
-}
-
-// ------------------------------------- ************************************************************* ---------------------------------------
-// ---------- Fonction qui ajoute la quantité de produit pour chaque modele 
-//Elle récupérer la liste avec la clé 'basket' dans le local storage 
-//et la liste retourner par la fonction findColorModel()
-//Elle compare la liste des paire id/couleur à la liste 'basket' et ajoute la quantité total de chaque modèle qui est commander 
-//Elle retourne ensuite une liste contenant tout les modèles différents demander et leur quantités 
-
-async function quantity(){
-
-    //récupération du panier 
-    const storage = JSON.parse(localStorage.getItem('basket'));
-
-    //récupération de la liste de produit avec l'id et la couleur
-    const listColorProduct = await findColorModel();
-
-    //liste du storage trié 
-    let lastListForBasket = [];
-
-    //pour chaque élément de la liste id / color 
-    //si la couleur et l'id sont le même dans le storage 
-    //on additionne leur quantité
-    listColorProduct.forEach(element => {
-
-        let quantityOfThis = 0;
-        
-        storage.forEach(e => {
-
-            if (element.id === e.id && element.color === e.color){
-
-                quantityOfThis = quantityOfThis + e.quantity;
-
-                if(quantityOfThis < 0 ){
-
-                    quantityOfThis = 1;
-    
-                }else if(quantityOfThis > 100 ){
-    
-                    quantityOfThis = 100;
-    
-                }
-
-            }
-
-        });
-
-        // création d'un objet avec la quantité ajouter 
-        let lastObject = newObjetc(element.id, element.color, quantityOfThis);
-        //placement de l'objet dans la liste 
-        lastListForBasket.push(lastObject)
-
-    });
-    
-    //retourne une liste d'élément avec un id et/ou une couleur différents 
-    //des autres et un cumule des quantité.
-    return lastListForBasket
-
-}
-
-// ------------------------------------- ************************************************************* ---------------------------------------
-// --------- Fonction pour mettre la liste de produits du panier le local storage
-//Elle récupérer une liste d'objets trié 
-//(pas d'id avec la même couleur en double et la quantité de chaque types de produit est présente)
-//Elle supprime la clé 'order' du panier et ajoute une nouvelle liste 'order' 
-//Elle appelle ensuite une fonction pour afficher les modèles
-
-async function putStorage(){
-
-    const oneList =  await quantity();
-
-    localStorage.removeItem('order')
-    const listToPut = oneList;
-    
-    //récupération du localStorage
-    let storage = JSON.parse(localStorage.getItem('order'));
-
-    if (storage){
-
-        localStorage.removeItem('order')
-        storage = [];
-        storage.push(listToPut)
-        localStorage.setItem('order', JSON.stringify(storage))
-
-    }else{
-
-        storage = [];
-        storage.push(listToPut)
-        localStorage.setItem('order', JSON.stringify(storage))
-
-    }
-
-    findElementToShow()
-
-} 
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction Principale pour l'affichage et la gestion du panier 
@@ -444,66 +307,38 @@ async function basket(){
     
     //récupération des liste du local storage
     const storage = JSON.parse(localStorage.getItem('basket'));
-    const ordering = JSON.parse(localStorage.getItem('order'));
 
-    //création de la liste order (si elle n'existe pas)
-    if (!ordering && storage){
-        if (!ordering){
-            window.location.reload()
-        }
-    }
-
-    //Appel des fonctions pour le panier si le panier n'est pa vide 
+    //Appel des fonctions pour le panier si le panier n'est pas vide 
     if (storage && storage.length > 0){
 
-        putStorage()
+        findElementToShow()
         eventFormulary()
 
     }else {
 
         //affichage d'une alerte et notoyage du locale storage
         window.alert('Votre panier est vide.')
-        localStorage.removeItem('order')
         localStorage.removeItem('basket')
 
     }
 }
 
+
+
 //---------------------------------------******************** Partie Formulaire ********************** ----------------------------------------------------
 
 // ------------------------------------- ************************************************************* ---------------------------------------
-// ----------- Fonction qui récupére la liste des id de la commande
-//Elle récupére la liste des commandes dans le local storage 
-//Elle crée une liste contenant uniquement les ids différents présent dans la commande
-//Elle retourne la liste d'ids
+//Fonctions de vérifivation de donnée par regex
 
-function idOrders(){
+//regex pour nom et prénom
+const regexNames = (value) => { return  /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,50}$/i.test(value) };
+//regex pour une adresse française, code postal et nom de rue 
+const regexAddress = (value) => { return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ0-9 ]+$/.test(value) };
+//regex pour une ville 
+const regexCity = (value) => { return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,60}$/i.test(value) };
+//regex pour un email
+const regexEmail = (value) => { return  /^[a-zA-Z0-9_.+-]+@[\w]+\.[\w]{2,4}$/i.test(value) };
 
-    //liste des id de la commande
-    let listOfId = [];
-
-    //Récupération du LocalStorage
-    const storage = JSON.parse(localStorage.getItem('order'));
-
-    //ajout des ids dans la liste
-    storage.forEach(element => {
-        
-        element.forEach(ele => {
-            
-            let findId = listOfId.find(e => e === ele.id);
-            if (!findId){
-
-                if (typeof ele.id == "string"){
-                    listOfId.push(ele.id)
-                }
-
-            }
-        });
-    });
-
-    return listOfId
-
-}
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui ajoute un id à l'url de la page confirmation et redirige l'utilisateur sur cette page
 //Elle prend en argument les données retourner par l'API aprés l'envoie des données du formulaire
@@ -515,7 +350,6 @@ function idReturn(resp){
 
     //redirection vers la page confirmation 
     document.location.href=idToSend;
-    
 
 }
 
@@ -538,7 +372,9 @@ async function post(thingToSend){
 
         },
         body: JSON.stringify(thingToSend),
+
     })
+
     //récupération de la réponse 
     .then(res => res.json())
     
@@ -547,12 +383,92 @@ async function post(thingToSend){
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
-// ---------- Fonction qui écoute l'événement d'envoie les données du formulaire, qui récupére les données vérifiées et les envoie
-//Une fois les données vérifiés elle fait appel la fonction post pour envoyer les données à l'API
+// ----------- Fonction qui récupére la liste des id de la commande
+//Elle récupére la liste des commandes dans le local storage 
+//Elle crée une liste contenant uniquement les ids différents présent dans la commande
+//Elle retourne la liste d'ids
+
+function idOrders(){
+
+    //liste des id de la commande
+    let listOfId = [];
+
+    //Récupération du LocalStorage
+    const storage = JSON.parse(localStorage.getItem('basket'));
+
+    //ajout des ids dans la liste
+    storage.forEach(element => {
+            
+        let findId = listOfId.find(e => e === element.id);
+
+        if (!findId){
+
+            if (typeof element.id == "string"){
+                listOfId.push(element.id)
+            }
+
+        }
+    });
+
+    return listOfId
+
+}
+// ------------------------------------- ************************************************************* ---------------------------------------
+// ---------- Fonction qui écoute les input
+//Elle prend en paramétre le noeud de l'input, le format de donnée à analyser, le neud pour afficher l'erreur et un message d'alerte
+//Elle vérfie la donnée de l'input avec le bon regex
+//indique à l'utilisateur si la donnée n'est pas valide
+
+function inputchange(locHtml, typeOfData, locError, saidAlert){
+
+    //variable avec la réponse du regex 
+    let regexBack;
+ 
+    //ciblage du bon regex
+    locHtml.addEventListener('input', e => {
+        if (typeOfData == "firstName" || typeOfData == "lastName"){
+        
+            regexBack = regexNames(locHtml.value)
+        
+        }else if (typeOfData == "address"){
+            
+            regexBack = regexAddress(locHtml.value)
+        
+        }else if (typeOfData == "city"){
+            
+            regexBack = regexCity(locHtml.value)
+        
+        }else if (typeOfData == "email"){
+            
+            regexBack = regexEmail(locHtml.value)
+        
+        };
+        
+        //affichage des messages d'erreurs
+        if (regexBack && locHtml.value != "" && typeof locHtml.value === "string"){
+
+            locError.innerHTML = "";
+
+        }else{
+
+            locError.innerHTML = saidAlert;
+
+        }
+    });
+}
+
+// ------------------------------------- ************************************************************* ---------------------------------------
+// ---------- Fonction qui écoute les événements des champs de formulaire, vérifie les données et si elle sont valide appel une fonction pour les envoyer
+//Elle s'éléctionne les inputs et les paragraphe d'erreur du formulaire dans le html
+//Elle contient des regex pour vérifier que le format de donnée de chaques champs correspond a ce que l'on attend
+//Elle écoute les inputs quand l'utilisateur les remplis et indique un message d'erreur si nécéssaire
+//Elle écoute le bouton commander
+//Vérifie les formats de données (champs de formulaire et liste des ids à envoyer)
+//Une fois les données validées, elle fait appelle à la fonction post() pour les envoyer à l'API
 
 async function eventFormulary(){
 
-    //Elements du formulaire 
+    //Elements du formulaire dans le html
     const firstName = document.querySelector('#firstName');
     const firstNameError = document.querySelector('#firstNameErrorMsg')
     const lastName = document.querySelector('#lastName');
@@ -563,84 +479,46 @@ async function eventFormulary(){
     const cityError = document.querySelector('#cityErrorMsg')
     const email = document.querySelector('#email');
     const emailError = document.querySelector('#emailErrorMsg')
-
-    //regex pour nom et prénom
-    const regexNames = (value) => { return  /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,50}$/i.test(value) };
-    //regex pour une adresse française, code postal et nom de rue 
-    const regexAddress = (value) => { return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ ]+$/.test(value) };
-    //regex pour une ville 
-    const regexCity = (value) => { return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]+$/i.test(value) };
-    //regex pour un email
-    const regexEmail = (value) => { return  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) };
  
     //partie vérification des inputs 
-    firstName.addEventListener('input', e => {
-        
-        if (regexNames(firstName.value) && firstName.value != "" && typeof firstName.value == "string"){
-            firstNameError.innerHTML = "";
-        }else{
-            firstNameError.innerHTML = "Veuillez renseigner un prénom valide. <br/> Ex : Anna, Jean-jaque, Philipe, etc ...";
-        }
+    inputchange(firstName, "firstName", firstNameError, "Veuillez renseigner un prénom valide. <br/> Ex : Anna, Jean-jaque, Philipe, etc ...")
+    inputchange(lastName, "lastName", lastNameeError, "Veuillez renseigner un nom valide. <br/> Ex : Chirac, Macron, Dali, etc ...")
+    inputchange(address, "address", addressError, "Veuillez renseigner une adresse valide. <br/> Ex :75000 rue du paradis ...")
+    inputchange(city, "city", cityError, "Veuillez renseigner une ville valide. <br/> Ex : Chicago, Paris, Bordeaux, etc ...")
+    inputchange(email, "email", emailError, "Veuillez renseigner un email valide. <br/> Ex : mon-mail@email.com")
 
-    });
-    lastName.addEventListener('input', e => {
-        
-        if (regexNames(lastName.value) && lastName.value != "" && typeof lastName.value == "string"){
-            lastNameeError.innerHTML = "";
-        }else{
-            lastNameeError.innerHTML = "Veuillez renseigner un nom valide. <br/> Ex : Chirac, Macron, Dali, etc ...";
-        }
-        
-    });
-    address.addEventListener('input', e => {
-        
-        if (regexAddress(address.value)  && typeof address.value == "string"){
-            addressError.innerHTML = "";
-        }else{
-            addressError.innerHTML = "Veuillez renseigner une adresse valide. <br/> Ex :75000 rue du paradis ...";
-        }
-        
-    });
-    city.addEventListener('input', e => {
-        
-        if (regexCity(city.value) && typeof city.value == "string"){
-            cityError.innerHTML = "";
-        }else{
-            cityError.innerHTML = "Veuillez renseigner une ville valide. <br/> Ex : Chicago, Paris, Bordeaux, etc ...";
-        }
-        
-    });
-    email.addEventListener('input', e => {
-        
-        if (regexEmail(email.value) && typeof email.value == "string"){
-            emailError.innerHTML = "";
-        }else{
-            emailError.innerHTML = "Veuillez renseigner un prénom valide. <br/> Ex : mon-mail@email.com";
-        }
-        
-    });
-   
-    //Bouton pour l'envoie du formulaire 
-    
+    //envoie des données du formulaire 
+    //bouton commander 
     const sendFormulary = document.querySelector('#order');
             
     sendFormulary.addEventListener('click', async e => {
         e.preventDefault();
 
+        //première vérification des données des champs 
         if (regexNames(firstName.value) && typeof firstName.value === "string" && regexNames(lastName.value) && typeof lastName.value === "string" && regexAddress(address.value) && typeof address.value === "string" && regexCity(city.value) && typeof city.value === "string" && regexEmail(email.value) && typeof email.value === "string"){
+            
+            //récupération de la liste des ids
             const idToSend = idOrders();
             let realString = true;
             
+            //vérification pour que les is soit bien de type string
             idToSend.forEach(e => {
+
                 if (typeof e != "string"){
+
                     realString = false;
+
                 }else if (realString != false){
+
                     realString = true;
+
                 }
             });
 
+            //seconde vérification des données des champs du formulaire 
             if (realString && regexNames(firstName.value) && typeof firstName.value === "string" && regexNames(lastName.value) && typeof lastName.value === "string" && regexAddress(address.value) && typeof address.value === "string" && regexCity(city.value) && typeof city.value === "string" && regexEmail(email.value) && typeof email.value === "string"){
 
+                //création d'un objet contact avec des données valides
                 let thingsToSend =  {
 
                         firstName : firstName.value,
@@ -653,25 +531,22 @@ async function eventFormulary(){
 
                     //ajout de la liste des id et des infos formulaire dans un seule objet
                     const objetToSend = {
+
                         contact : thingsToSend,
                         products : idToSend
+                        
                     }
                     //appel de la fonction post avec les données a envoyer en argument
                     post(objetToSend) 
                 
             }else{
 
+                //renvoie une erreur si les données ne sont pas valide
                 throw new Error ("les type de données ne sont pas tous de type string")
 
-            }
-            
-                
+            }      
         }
-    
-    }); 
-          
-    
-    
+    });    
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
@@ -681,90 +556,3 @@ async function eventFormulary(){
 
 basket()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//Bouton pour l'envoie du formulaire 
-    // const sendFormulary = document.querySelector('#order');
-    
-    // sendFormulary.addEventListener('click', async e => {
-    //     e.preventDefault();
-        
-
-    //     //ajout de la liste des id et des infos formulaire dans un seule objet
-    //     // const objetToSend = {
-    //     //     contact : thingsToSend,
-    //     //     products : productsId
-    //     // }
-    //     //appel de la fonction post avec les données a envoyer en argument
-    //     //post(objetToSend)     
-         
-    // });   
-        
-// ------------------------------------- ************************************************************* ---------------------------------------
-
-// function testForm(){
-
-//     //Point de vérification des inputs
-//     const firstName = document.querySelector('#firstName');
-//     const lastName = document.querySelector('#lastName');
-//     const address = document.querySelector('#address');
-//     const city = document.querySelector('#city');
-//     const email = document.querySelector('#email');
-
-    
-
-//     let eventFirstName = listenInput(firstName);
-//     let eventLastName = listenInput(lastName);
-//     let eventAddress = listenInput(address);
-//     let eventCity = listenInput(city);
-//     let eventEmail = listenInput(email);
-
-// }
-// --------------------------//----------- ************************************************************* ---------------------------------------
-
-// //créer une fonction de vérification avec oninput 
-
-// function verifByRegexAndType(regex, val, error, message){
-
-//     if (regex && val != "") {
-
-//         error.innerHTML = "";
-//         console.log(val)
-//         return val
-
-//     }else{
-
-//         error.innerHTML = message;
-//         return false
-
-//     }
-   
-// }

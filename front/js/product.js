@@ -1,159 +1,160 @@
-// ------------------------------------- ************************************************************* ---------------------------------------
-//Fonction pour récupérer les données de l'API
-//Elle donne la liste des produits du site
-async function recup(){
-
-    const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json());    
-    return listProducts
-
-}
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction qui envoie les données dans le localStorage
-//Elle crée un objet à envoyer dans le local storage 
-//Vérifie si la quantité et la couleur sont reseignées 
-//Ajoute le choix au local storage 
+//Elle crée un objet à ajouter dans le local storage 
+//récupére les données du local Storage
+//regarde si l'objet à ajouter est dans le local storage 
+//si il est présent elle met a jour la quantité du produit 
+//elle créer une nouvelle liste d'objet avec la quantité mise a jour pour le modèle demander 
+//si l'objet à ajouter n'est pas de le local Storage
+//elle crée une nouvelle liste avec le nouvel objet en plus 
+//si le local storage est vide elle ajoute l'objet à la nouvelle liste 
+//elle remplace la liste du local storage par la nouvelle liste 
 
 function storageItem(choicecol, choiceQtt, theIdd){
 
     //creation d'un objet à envoyer au localStorage
     let choiceOfUser = {
+
         id : theIdd,
         color : choicecol,
         quantity : parseInt(choiceQtt),
+
     };
     
     //récupération du localStorage
     let recuperation = JSON.parse(localStorage.getItem('basket'));   
 
+    //nouvelle liste
+    let listToPut = [];
+
+    //vérification pour voir si le local storage est vide ou non
     if (recuperation && choiceOfUser.quantity != 0 && choiceOfUser.color != ""){
 
-        recuperation.push(choiceOfUser)
-        localStorage.setItem('basket', JSON.stringify(recuperation))
+        let alreadyHere = recuperation.find(e => e.color === choicecol && e.id === theIdd);
+
+        //vérification pour voir si l'objet est déjà présent
+        if (alreadyHere){
+            
+            recuperation.forEach(element => {
+                
+                if (element.id === theIdd && element.color === choicecol){
+
+                    //mise à jours de la quantité 
+                    choiceOfUser.quantity = choiceOfUser.quantity + element.quantity
+                    listToPut.push(choiceOfUser)
+
+                }else{
+
+                    listToPut.push(element)
+
+                }
+            });
+
+        }else{
+
+            listToPut.push(choiceOfUser)
+
+            recuperation.forEach(ele => {
+                
+                listToPut.push(ele)
+
+            });
+        }
 
     }else{
 
         if (choiceOfUser.quantity != 0 && choiceOfUser.color != "") {
+                   
+            listToPut.push(choiceOfUser)
         
-            recuperation = [];
-            recuperation.push(choiceOfUser)
-            localStorage.setItem('basket', JSON.stringify(recuperation))}
-
-    }  
+        }
+    } 
+    
+    if (choiceOfUser.quantity != 0 && choiceOfUser.color != ""){
+        //mise en place de la nouvelle liste dans le local Storage 
+        localStorage.removeItem('basket')
+        localStorage.setItem('basket', JSON.stringify(listToPut)) 
+    }
+    
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
-// ---------- Fonction qui vérifie si le nombre maximume est déja atteint 
-//Elle prend la quantité totale de chaque éléments du local storage 
-//Si la quantité plus la quantité choisi par l'utilisateur  est inférieure à 100
-//Elle retourne un nombre à comparer pour savoir le nombre d'article qui peut encore être commandés
+// ---------- Fonction qui retourne une quantité total pour un produit en demande d'ajout
+//Elle regarde dans la liste du panier si le produit à ajouter est déjà présent
+//Si le produit si trouve elle ajoute la quantité demander à la quantité existante dans le panier 
+//Elle renvoie la quantité qui correspond à la quantité du produit aprés l'ajout 
+//Si le produit n'est pas dans la liste du panier elle retourne la quantité présente dans l'input 
 
-function maximum(color, id, quantity){ 
+function totalQuanti(color, quanti, id){
 
-    //récupération du local Storage
-    let storage =JSON.parse(localStorage.getItem('basket'));
-    
-    let quanti = 0; 
+    //récupération du storage 
+    let storage = JSON.parse(localStorage.getItem('basket'));
 
+    let quantity = 0;
+
+    //vérfication pour voir si des élément sont dans le local Storage 
     if (storage){
-        
-        //Calcul de la quantité totale 
+
         storage.forEach(element => {
-        
-            if (element.color === color && element.id === id){
-    
-                quanti = quanti + element.quantity;
-    
+
+            if (element.id === id && element.color === color){
+
+                //cumul des quantité 
+                quantity = parseInt(quantity) + parseInt(element.quantity)
+
             }
-    
         });
+        
+        let totalQuantity = quantity + parseInt(quanti);
 
-        //vérifie si le produit a pas déjà atteint le max autoriser 
-        if (parseInt(quanti) + parseInt(quantity) > 100){
+        return totalQuantity
 
-            let quantityToCompare = parseInt(quanti);
-            return quantityToCompare
+    }else{
 
-        }
+        return parseInt(quanti)
+
     }
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction qui retourne la quantité et la couleur choisie
 //Elle se déclanche au clique de la souris sur le bouton ajouter au panier 
-//Elle récupére le chois de l'utilisateur pour la couleur 
-//Compare de la quantité choisie pour le produit avec la fonction maximum()
-//Affiche un message d'erreur si le nombre d'article autorisés est dépassé
-//Propose d'ajouter 1 produit si l'utilisateur en choisit 0
-//Propose d'ajouter 100 produit si l'utilisateur en choisit plus de 100
-//Affiche un message d'erreur si la couleur n'est pas choisie
-//Si les choix sont valide renvoie a la fonction StorageItem les valeur à ajouté 
+//Elle récupére la quantité total de toutes les commande d'un produit demander 
+//Elle vérifie si la couleur est choisie
+//Elle vérifie que la quantité totale du produit ne dépasse pas ne nombre limite autorisé et ne soit pas négatif ou null
+//Si toute les conditions sont bonne elle fait appelle à la fonction storageitem pour ajouter les données au panier
 
 function choiceUser(colorValue, quantityValue, idUser){
+    //emplacement du bouton commander dans le html
     const btnAddBasket = document.querySelector('#addToCart')
 
     //partie choix quantité et couleur 
     btnAddBasket.addEventListener('click', (e) => {
         
-        let choiceColor = colorValue.value;
-        let isAlreadyMax = maximum(colorValue.value, idUser, quantityValue.value);
-        let choiceQuantity;
-
-        //Vérification de la quantité 
-        if (isAlreadyMax + parseInt(quantityValue.value) > 100){
-
-            let numberAwload =  100 - isAlreadyMax; 
-
-            window.alert("Vous dépasser le nombre d'articles autorisés pour ce modèle. nombre d'article autorisé restant : " + numberAwload)
-
-            if (window.confirm("Voulez-vous ajoutez " + numberAwload + " produits ?")){
-                        
-                if (choiceColor == ""){
-
-                    window.alert('Veulliez sélectionner une couleur.')
+        let quantityOfThis = totalQuanti(colorValue.value, quantityValue.value, idUser);
         
-                }else{
+        //vérification des conditions pour ajouter un produit 
+        if (colorValue.value != ""){
+            if (parseInt(quantityValue.value) <= 0){
 
-                    choiceQuantity = numberAwload;
-                    storageItem(choiceColor, choiceQuantity, idUser)
-                    
-                }
-            
+                window.alert('Veuillez choisir une quantité valide à ajouter.')
+
+            }else if (quantityOfThis > 100){
+
+                window.alert("Vous avez dépasser le nombre d'article maximum pour ce modèle. Nombre d'article encore disponible pour ce modèle : " + (100 - (quantityOfThis - parseInt(quantityValue.value))))
+
+            }else{
+
+                //Ajout du produit 
+                storageItem(colorValue.value, quantityValue.value, idUser)
+
             }
-
         }else{
 
-            if (quantityValue.value <= 0){
+            window.alert("Veuillez choisir une couleur.")
 
-                if (window.confirm("Vous n'avez pas sélectionné d'article. Voulez-vous ajouter 1 article ?")){
-                    if (choiceColor == ""){
-
-                        window.alert('Veulliez sélectionner une couleur.')
-            
-                    }else{
-
-                        choiceQuantity = 1;
-                        storageItem(choiceColor, choiceQuantity, idUser)
-                    }
-                    
-                }
-
-            }                
-            //vérification de la couleur
-            else if (choiceColor == ""){
-
-                window.alert('Veulliez sélectionner une couleur.')
-
-            }
-            else{
-
-                choiceColor = colorValue.value;
-                choiceQuantity = quantityValue.value;
-
-                storageItem(choiceColor, choiceQuantity, idUser)
-
-            }
-        }   
+        }    
     });
 }
 
@@ -216,48 +217,19 @@ function IdProduc(){
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
-// ------- Fonction pour déterminer qu'elle produit afficher
-//Elle compare l'id qui se trouve dans l'url aux ids des produits du site
-//Si un id correspond elle retourne l'objet qui contient cet id 
-
-async function whatProduct(){
-
-    const listOfProduct = await recup();
-    const theId = IdProduc();
-    let theElem = [];
-
-    //comparaison de l'id 
-    listOfProduct.forEach(element => {
-
-        if (theId == element._id){
-
-            theElem.push(element)
-
-        }
-        
-    });
-    return theElem
-}
-
-// ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction principale pour afficher la page avec le bon produit 
 //Elle récupére les informations du produit
 //Fait appel à la fonction de construction avec les éléments du porduit
 
 async function main(){
 
-    const theProduct = await whatProduct();
-    const realProduct = [theProduct[0]];
-    
-    realProduct.forEach(elem => {
+    const theId = IdProduc();
+    let urlForProduct = 'http://127.0.0.1:3000/api/products/' + theId
+    const theProduct = await fetch(urlForProduct).then(r => r.json());
 
-        construction(elem.imageUrl, elem.altTxt, elem.name, elem.price, elem.description, elem.colors, elem._id)  
-
-    });
-    
+    construction(theProduct.imageUrl, theProduct.altTxt, theProduct.name, theProduct.price, theProduct.description, theProduct.colors, theProduct._id)  
 
 }
 // ------------------------------------- ************************************************************* ---------------------------------------
 
 main()
-

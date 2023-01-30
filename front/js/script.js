@@ -3,8 +3,10 @@
 //La fonction envoie une requète avec fetch et récupére la liste des produits disponible pour le site de canapés 
 
 async function recup(){
+
     const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json());    
     return listProducts
+
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
@@ -53,7 +55,6 @@ async function main(){
         article.append(descriptionProduct)
 
     });
-
 } 
 // ------------------------------------- ************************************************************* ---------------------------------------
 
