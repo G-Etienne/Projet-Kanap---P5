@@ -1,15 +1,14 @@
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction qui envoie les données dans le localStorage
-//Elle crée un objet à ajouter dans le local storage 
-//récupére les données du local Storage
-//regarde si l'objet à ajouter est dans le local storage 
-//si il est présent elle met a jour la quantité du produit 
-//elle créer une nouvelle liste d'objet avec la quantité mise a jour pour le modèle demander 
-//si l'objet à ajouter n'est pas de le local Storage
-//elle crée une nouvelle liste avec le nouvel objet en plus 
-//si le local storage est vide elle ajoute l'objet à la nouvelle liste 
-//elle remplace la liste du local storage par la nouvelle liste 
+// Crée un objet à envoyer avec la couleur, la quantité et l’id d’un élément que l’on veut ajouter au local storage
+// Vérifie si cet élément n’est pas déjà dans le local storage 
+// Crée un nouvelle liste d’objet qui contient le nouvel élément : 
+// soit la quantité est mise à jour si l’élément est déjà présent dans le local Storage 
+// soit elle ajoute l’objet comme un nouvel élément 
+// Remplace la liste du localStorage par la nouvelle liste qui est créée.
+
+// Besoin précis → ajouter un nouvel élément dans le local storage en évitant les doublons.
 
 function storageItem(choicecol, choiceQtt, theIdd){
 
@@ -81,10 +80,13 @@ function storageItem(choicecol, choiceQtt, theIdd){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui retourne une quantité total pour un produit en demande d'ajout
-//Elle regarde dans la liste du panier si le produit à ajouter est déjà présent
-//Si le produit si trouve elle ajoute la quantité demander à la quantité existante dans le panier 
-//Elle renvoie la quantité qui correspond à la quantité du produit aprés l'ajout 
-//Si le produit n'est pas dans la liste du panier elle retourne la quantité présente dans l'input 
+// Elle prend en paramètre l’id, la couleur et la 	quantité d'un produit que l’utilisateur souhaite ajouter.
+// Récupére les commandes du panier dans le local storage 
+// Vérifie si un même élément correspond au produit que l’on veut ajouter 
+// Si un même élément si trouve elle renvoie le cumul de la quantité de cet élément avec l’élément que l’utilisateur souhaite ajouter
+// Sinon elle retourne la quantité de base du produit que l’utilisateur souhaite ajouter 
+
+// Besoin précis → retourner la quantité totale d’un produit que l’on souhaite ajouter pour vérifier que l’on ne dépasse pas le nombre d'articles autorisés.
 
 function totalQuanti(color, quanti, id){
 
@@ -118,12 +120,16 @@ function totalQuanti(color, quanti, id){
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
-// --------- Fonction qui retourne la quantité et la couleur choisie
-//Elle se déclanche au clique de la souris sur le bouton ajouter au panier 
-//Elle récupére la quantité total de toutes les commande d'un produit demander 
-//Elle vérifie si la couleur est choisie
-//Elle vérifie que la quantité totale du produit ne dépasse pas ne nombre limite autorisé et ne soit pas négatif ou null
-//Si toute les conditions sont bonne elle fait appelle à la fonction storageitem pour ajouter les données au panier
+// --------- Fonction qui  vérifie les formats de données des inputs 
+// Elle récupère l’élément à écouter 
+// Elle récupère la quantité total du produit avec le panier grace à la fonction totalQuanti()
+// Si la couleur n’est pas renseignée elle affiche un message d’alerte
+// Si la quantité est : 
+// trop basse → message d’erreur qui demande une quantité valide
+// trop haute → message d’erreur qui dit que le nombre d'articles autorisés est dépassé et qui indique le nombre restant d'ajout pour le produit.
+// Si toutes les informations sont renseignées elle appelle la fonction storageItem() avec les infos du produits à ajouter en paramètre.
+
+// Besoin précis → vérifie que les données des inputs sont bien renseignées et qu'elles correspondent aux exigences du site.
 
 function choiceUser(colorValue, quantityValue, idUser){
     //emplacement du bouton commander dans le html
@@ -160,8 +166,15 @@ function choiceUser(colorValue, quantityValue, idUser){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction pour construir les blocs HTML
-//Elle prend en argument les éléments à ajouter
-//Elle construit l'affichage de la page avec ces éléments
+// Elle construit le html avec les informations du produits placer en paramètre 
+// Elle récupère la position de chaque élément auquel on doit ajouter les informations du produit.
+// Crée une option pour chaque couleur du produit 
+// Ajoute le nom du produit en titre d’onglet de page 
+// Crée et ajoute l’image du produit 
+// Ajoute le reste des informations du produits
+// Elle appelle la fonction choiceUser() qui vérifie la valeur des inputs.
+
+// Besoin précis → Construire les éléments html de la page avec les informations placer en paramètre.
 
 function construction(ima, alt, nameProd, pri, desc, col, idd){
 
@@ -204,7 +217,10 @@ function construction(ima, alt, nameProd, pri, desc, col, idd){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ------- Fonction pour récupérer l'id dans l'URL
-//Elle récupére l'id du produit à afficher dans l'url de la page
+// Elle récupère l’id du produit dans l’url de la page.
+// Elle retourne cet id.
+
+// Besoin précis → récupérer l’id du produit dans l’url de la page.
 
 function IdProduc(){
 
@@ -218,8 +234,10 @@ function IdProduc(){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction principale pour afficher la page avec le bon produit 
-//Elle récupére les informations du produit
-//Fait appel à la fonction de construction avec les éléments du porduit
+// Elle envoie une requête fetch avec l’id d’un produit dans l’url pour récupérer les informations d’un produit précis .
+// Elle fait appelle à la fonction construction() avec les information du produit placer en paramètre
+
+// Besoin précis → récupérer les informations du produit cibler pour pouvoir l’afficher avec la fonction construction()
 
 async function main(){
 

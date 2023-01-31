@@ -2,6 +2,11 @@
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui ajoute dans la page le nombre total d'article dans le panier et le prix total du panier
+// Elle prend en paramètre la quantité totale et le prix total des produits du panier.
+// Elle récupère l’emplacement du Dom qui doit afficher le prix total et la quantité totale.
+// Elle affiche le prix totale et la quantité totale sur la page panier
+
+// Besoin précis → afficher la quantité totale et le prix totale des produits du panier
 
 function numberAndPriceProducts(theQuantity, price){  
 
@@ -14,17 +19,64 @@ function numberAndPriceProducts(theQuantity, price){
     priceTotal.innerText = price;
 
 }
+// ------------------------------------- ************************************************************* ---------------------------------------
+// ---------- Fonction qui met à jour le local storage.
+// Elle prend en paramètre au minimum un id et une couleur d’un produit.
+// Elle peut prendre aussi une quantité et type d’événement.
+// Si le type d’événement est “quantity” elle ajuste la quantité du produit.
+// Elle crée une nouvelle liste avec la nouvelle quantité.
+// Sinon elle crée une nouvelle liste sans le produit.
+// Elle remplace la liste du localStorage par la nouvelle liste.
+
+// Besoin Précis → mettre à jour le local Storage.
+
+function replace(id, color, quantity, typeOfEvent){
+
+    //création d'une nouvelle liste avec la nouvelle quantité du produit 
+    let newList = [];
+
+    let storage = JSON.parse(localStorage.getItem('basket'));
+    storage.forEach(ele => {
+        
+        if (ele.id ===  id && ele.color === color){
+
+            if (typeOfEvent == 'quantity'){
+                const newElement = newObjetc(id, color, quantity)
+                newList.push(newElement)
+            }
+
+        }else{
+
+            const newElement = newObjetc(ele.id, ele.color, ele.quantity)
+            newList.push(newElement)
+
+        }  
+    }); 
+
+    //remplacement des listes du local storage par la nouvelle liste 
+    storage = [];
+    storage.push(newList)
+
+    localStorage.removeItem('basket')
+    localStorage.setItem('basket', JSON.stringify(newList))
+
+}
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // --------- Fonction pour supprimer un produit de la page panier 
-//Elle prend en argument la localisation html de l'input d'un bouton supprimer, un id et une couleur
-//Au clique de la souris sur le bouton supprimer 
-//Elle envoie une demande de confirmation de suppréssion de l'élément à l'utilisateur
-//Si celle si et confirmée, elle crée une nouvelle liste sans l'élément qui doit être supprimer 
-//Remplace les listes du locale storage par la nouvelle liste 
-//Recharge la page pour enlever le produit supprimer de la page 
+// Elle prend en paramètre l’emplacement dans le DOM d’un input (bouton supprimer).
+// Elle récupère l’id et la couleur du produit avec closest()
+// Elle récupère la liste des produits du panier dans le storage.
+// Elle affiche un message d’alerte pour demander à l’utilisateur s' il veut réellement supprimer ce produit.
+// Si oui, elle crée une nouvelle liste de produit du panier mais sans l’élément à supprimer.
+// Elle appelle la fonction replace() pour mettre à jour le panier.
+// (avec en paramètre l’id et la couleur du produit à supprimer)
+// Elle supprime le produit de la page.
 
-async function eventDelete(placeInput){
+// Besoin précis → supprimer un produit de la liste des commandes.
+
+
+async function eventDelete(placeInput, placeRemove){
     
     placeInput.addEventListener('click', e => {
 
@@ -33,40 +85,31 @@ async function eventDelete(placeInput){
         let dataId = donneesArticle.dataset.id;
         let dataColor = donneesArticle.dataset.color;
 
-        //récupération de la liste des produits
-        let storage = JSON.parse(localStorage.getItem('basket'));
-
         //demande de confirmation
         const alert = window.confirm("Voulez-vous réellement supprimer cet article ?");
-
-        const newList = [];
         
         if (alert){
 
             //création d'une nouvelle liste sans l'élément supprimer 
-            storage.forEach(element => {
-                
-                if (element.color != dataColor || element.id != dataId){
-                    
-                    newList.push(element)
-                    
-                }
-            });
+            replace(dataId, dataColor)
 
-            //remplacement de la liste dans le local Storage
-            localStorage.removeItem('basket')
-            localStorage.setItem('basket', JSON.stringify(newList))
-
-            //rechargement de la page pour supprimer l'affichage de l'article
-            location.reload()
+            //suppréssionl'affichage de l'article
+            placeRemove.remove()
 
         }
+        //mise a jours du totale des produits et des prix
+        totalAndfindElementToShow(false)
     });   
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ----------- fonction pour construire un objet 
-//Elle renvoie une objet contenant un id, une couleur et une quantitée
+// Elle prend en paramètre un id, une couleur et un quantité
+// Elle contient une classe pour construire un objet selon un modèle de construction.
+// Elle construit un objet avec les informations placées en paramètre.
+// Elle retourne cet objet.
+
+// Besoin Précis → construire un objet qui contient l’id, la couleur et la quantité d’un produit.
 
 function newObjetc(idd, colorPro, quantityProd){
 
@@ -90,9 +133,16 @@ function newObjetc(idd, colorPro, quantityProd){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction pour controler la quantitié d'un produit 
-//Elle prend la position dans le Dom des inputs quantités 
-//Si les quantités ne sont pas trop basse ou trop haute elle les ajoute au panier 
-//Elle recharge la page pour mettre a jour les totals quantité et prix 
+// Elle prend en paramètre l’emplacement d’un input dans le DOM et la valeur de base de cet input.
+// Elle récupère les données du produit dans les data de la balise article.
+// Elle vérifie que la valeur des données des inputs quantité n’est pas trop basse ou trop haute et envoie un message d’erreur si c’est le cas
+// Si c’est le cas, elle construit une nouvelle liste de produits du panier avec la quantité de l’input ajusté.
+// Elle fait appel à la fonction replace() pour mettre à jour le local Storage.
+// Sinon elle remet la valeur de base dans l’input 
+// Elle appelle la fonction totalAndFindElementToShow(false) pour mettre à jour les totaux.
+// (le paramètre false permet de ne pas faire appel à la fonction constructor()).
+
+// Besoin précis → vérifier et modifie les valeurs des inputs quantité.
 
 async function eventQuantity(placeInput, valueBase){
     
@@ -121,44 +171,24 @@ async function eventQuantity(placeInput, valueBase){
         }else if (quantityChange <= 100){
 
             //création d'une nouvelle liste avec la nouvelle quantité du produit 
-            let newList = [];
-
-            let storage = JSON.parse(localStorage.getItem('basket'));
-            storage.forEach(ele => {
-                
-                if (ele.id ===  dataId && ele.color === dataColor){
-
-                    const newElement = newObjetc(dataId, dataColor, quantityChange)
-                    newList.push(newElement)
-
-                }else{
-
-                    const newElement = newObjetc(ele.id, ele.color, ele.quantity)
-                    newList.push(newElement)
-
-                }  
-            }); 
-
-            //remplacement des listes du local storage par la nouvelle liste 
-            storage = [];
-            storage.push(newList)
-
-            localStorage.removeItem('basket')
-            localStorage.setItem('basket', JSON.stringify(newList))
+            replace(dataId, dataColor, quantityChange, 'quantity')
+            valueBase = quantityChange
 
         }
 
         //mise a jours du totale des produits et des prix
-        location.reload()
+        totalAndfindElementToShow(false)
 
     });
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction pour construire les éléments html de la page 
-//Elle prend en argument une image, un nom, une couleur, un prix, une quantité, un texte et une id
-//Elle va construire les balise et ajouter le contenue nécéssaire pour construire une commande de la page panier 
-//Elle fait aussi appel au fonction pour gérer les événements (quantité et suppréssion)
+// Elle prend en paramètre les éléments pour afficher un produit (image, nom, couleur, prix quantité, texte alternatif, id).
+// Elle récupère l’emplacement dans le DOM ou les éléments doivent être affichés.
+// Elle crée les éléments HTML pour afficher le produit 
+
+// Besoin Précis → construire le html pour afficher un produit dans le panier 
 
 function contructor(image, nameProduct, color, price, theQuantity, textAlt, theIdd){
 
@@ -245,19 +275,24 @@ function contructor(image, nameProduct, color, price, theQuantity, textAlt, theI
     divInputs.append(btnDelete)
 
     //Fonction evenement suppression 
-    eventDelete(btnDelete)
+    eventDelete(btnDelete, article)
 
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction pour afficher les porduits du panier en fonction du modèle et calculer le totale quantité et prix
-//Elle récupére la liste des produits disponible du site
-//la liste des produits demander par l'utilisateur
-//Elle compare ensuite chaque élément de la commande avec chaque éléments de la liste de l'API
-//Si elle trouve un id similaire appel la fonction pour construire un élément sur la page 
-//Elle appel ensuite une fonction pour afficher le prix et la quantité totale
+// Elle récupère la liste des produits dans l’API
+// Elle récupère la liste des produits dans le localStorage
+// Déclare des variables pour stocker le total du prix des produits et de la quantité des produits.
+// Pour chacun des éléments de la liste de l’API elle compare la liste du local storage.
+// Si un id des deux liste est similaire 
+// Elle ajoute le prix et la quantité au variable pour les totaux 
+// Elle fait appelle à la fonction constructor() pour afficher l’élément dans la page.
+// Elle appelle la fonction pour afficher le total des quantités et du prix.
 
-async function findElementToShow(){
+// Besoin Précis → Afficher les produits par modèles et calculer les quantités et prix totaux.
+
+async function totalAndfindElementToShow(build){
 
     //récupération des produits en vente 
     const listProducts = await fetch('http://127.0.0.1:3000/api/products').then(r => r.json()); 
@@ -282,8 +317,11 @@ async function findElementToShow(){
                 quantityTotal += e.quantity;
 
                 //appel de la fonction pour construire un élément dans la page html
-                contructor(element.imageUrl, element.name, e.color, element.price, e.quantity, element.altTxt , element._id)
-
+                if (build){
+                
+                    contructor(element.imageUrl, element.name, e.color, element.price, e.quantity, element.altTxt , element._id)
+                
+                }
             }
         });
     });
@@ -293,15 +331,15 @@ async function findElementToShow(){
 
 }
 
-
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction Principale pour l'affichage et la gestion du panier 
-//Elle récupére les liste 'order' et 'basket' du local storage 
-//Si la liste 'order' n'est pas présente mais que la liste 'basket est présente, elle recharge la page afin de créer la liste 'order
-//Si le storage n'est pas vide elle appelle les fonctions pour l'affichage du panier et la gestion du formulaire
-//et du bouton commande
-//Si le storage est vide elle envoie une alerte pour signaler un panier vide
-//Elle n'étoie le local storage pour éviter les liste vide 
+// C’est la fonction d’appel principal du panier.
+// Elle regarde si le localStorage est vide ou non
+// Si le panier est vide, elle le signale à l'utilisateur, elle vide le panier pour éviter d'avoir une liste vide.
+// Si le panier contient des éléments, elle lance les fonctions de départ pour la page panier.
+
+// Besoin précis → vérifier si le panier est vide et lancer le programme de la page si il ne l’est pas.
+
 
 async function basket(){
     
@@ -311,7 +349,8 @@ async function basket(){
     //Appel des fonctions pour le panier si le panier n'est pas vide 
     if (storage && storage.length > 0){
 
-        findElementToShow()
+        // la valeur true permet de faire appel à la fonction contructor()
+        totalAndfindElementToShow(true) 
         eventFormulary()
 
     }else {
@@ -330,18 +369,22 @@ async function basket(){
 // ------------------------------------- ************************************************************* ---------------------------------------
 //Fonctions de vérifivation de donnée par regex
 
-//regex pour nom et prénom
+//Regex pour vérifier nom et prénom
 const regexNames = (value) => { return  /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,50}$/i.test(value) };
-//regex pour une adresse française, code postal et nom de rue 
+//Regex pour vérifier une adresse française, code postal et nom de rue 
 const regexAddress = (value) => { return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ0-9 ]+$/.test(value) };
-//regex pour une ville 
+//Regex pour vérifier une ville 
 const regexCity = (value) => { return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,60}$/i.test(value) };
-//regex pour un email
+//Regex pour vérifier un email
 const regexEmail = (value) => { return  /^[a-zA-Z0-9_.+-]+@[\w]+\.[\w]{2,4}$/i.test(value) };
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui ajoute un id à l'url de la page confirmation et redirige l'utilisateur sur cette page
-//Elle prend en argument les données retourner par l'API aprés l'envoie des données du formulaire
+// Elle prend en argument des données retournées par l’API après l'envoi du formulaire.
+// Elle ajoute l’id de commande retourner par l’API à l’url de la page confirmation.
+// Elle redirige l’utilisateur vers cet url.
+
+// Besoin Précis → Ajouter l’id de commande à l’url et rediriger l’utilisateur vers celui-ci.
 
 function idReturn(resp){
     
@@ -355,9 +398,12 @@ function idReturn(resp){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui envoie les données du formulaire et la liste d'id 
-//Elle prend en argument les objets à envoyer
-//Elle récupére les données de la réponse la réponse
-//Elle utilise la fonction idReturn en lui placant les données retourner en paramètre
+// Elle prend en paramètre un objet à envoyer à l’API.
+// Elle envoie une requête POST à l’API.
+// Elle appelle la fonction idReturn avec les données de la réponse de l’API en paramètre.
+
+// Besoin Précis → Envoyer un objet à l’API et récupérer sa réponse.
+
 
 async function post(thingToSend){
 
@@ -384,9 +430,15 @@ async function post(thingToSend){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ----------- Fonction qui récupére la liste des id de la commande
-//Elle récupére la liste des commandes dans le local storage 
-//Elle crée une liste contenant uniquement les ids différents présent dans la commande
-//Elle retourne la liste d'ids
+// Elle récupère les données des produits du panier dans le localStorage.
+// Elle regarde si les ids de chaque élément est présent ou non dans une liste d’ids.
+// Si il n’y est pas, elle l’ajoute à la liste.
+// Sinon elle vérifie si le type de données de l’id est de type string
+// Si oui elle l’ajoute à la liste 
+// Sinon elle l’ajoute en le transformant en type “string”.
+// Elle retourne la liste des ids des produits présents dans le panier .
+
+// Besoin Précis → récupérer les ids des produits du paniers sous forme de données de types “string”.
 
 function idOrders(){
 
@@ -404,9 +456,14 @@ function idOrders(){
         if (!findId){
 
             if (typeof element.id == "string"){
-                listOfId.push(element.id)
-            }
 
+                listOfId.push(element.id)
+            
+            }else{
+
+                listOfId.push((stringify(element.id)))
+
+            }
         }
     });
 
@@ -415,9 +472,14 @@ function idOrders(){
 }
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui écoute les input
-//Elle prend en paramétre le noeud de l'input, le format de donnée à analyser, le neud pour afficher l'erreur et un message d'alerte
-//Elle vérfie la donnée de l'input avec le bon regex
-//indique à l'utilisateur si la donnée n'est pas valide
+// Elle prend en paramètre un nœud du DOM qui correspond à un input.
+// Un type de format à analyser.
+// Un nœud du DOM qui correspond à l'emplacement du message d’erreur.
+// Elle vérifie qu’elle regex appliquer en fonction du type de format à analyser.
+// Si le regex ne valide pas la donnée ou si la donnée n’est pas du type string.
+// Elle affiche un message d’erreur.
+
+// Besoin Précis → vérifier les données entrer dans le formulaire pour afficher un message d’erreur si les données ne sont pas valides.
 
 function inputchange(locHtml, typeOfData, locError, saidAlert){
 
@@ -459,12 +521,13 @@ function inputchange(locHtml, typeOfData, locError, saidAlert){
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui écoute les événements des champs de formulaire, vérifie les données et si elle sont valide appel une fonction pour les envoyer
-//Elle s'éléctionne les inputs et les paragraphe d'erreur du formulaire dans le html
-//Elle contient des regex pour vérifier que le format de donnée de chaques champs correspond a ce que l'on attend
-//Elle écoute les inputs quand l'utilisateur les remplis et indique un message d'erreur si nécéssaire
-//Elle écoute le bouton commander
-//Vérifie les formats de données (champs de formulaire et liste des ids à envoyer)
-//Une fois les données validées, elle fait appelle à la fonction post() pour les envoyer à l'API
+// Elle récupère l’emplacement dans le DOM des messages d’erreur et des inputs du formulaire.
+// Elle vérifie que les formats de données sont valides et que les données sont de type “string”.
+// Si elle ne sont pas valide elle renvoie une erreur.
+// Sinon elle crée un objet à envoyer à l’API.
+// Et elle fait appel à la fonction post()
+
+// Besoin Précis → construire un objet à envoyer à l’API avec des données vérifiées.
 
 async function eventFormulary(){
 
@@ -545,14 +608,14 @@ async function eventFormulary(){
                 throw new Error ("les type de données ne sont pas tous de type string")
 
             }      
+        }else{
+
+            window.alert('Des données invalide sont présentes dans les champs du formulaire.')
+
         }
     });    
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 
-
-
-
 basket()
-

@@ -1,6 +1,8 @@
 // ------------------------------------- ************************************************************* ---------------------------------------
-//Fonction qui permet de récupérer les données de l'API
-//La fonction envoie une requète avec fetch et récupére la liste des produits disponible pour le site de canapés 
+// ---------- Fonction qui permet de récupérer les données de l'API
+// Récupère la liste des produits dans l’API
+
+// besoin précis → récupérer les données de l’API
 
 async function recup(){
 
@@ -10,9 +12,17 @@ async function recup(){
 }
 
 // ------------------------------------- ************************************************************* ---------------------------------------
-// ------ Fonction pour crée les éléments html de la page d'acceuil.
-// ------ La fonction va prendre chaques élément du tableau retourné par l'API
-// ------ et créer un bloc de présentation pour chaques produit.
+// ---------- Fonction pour crée les éléments html de la page d'acceuil.
+// Récupère les informations à ajouter 
+// Récupère la position dans le html ou doivent être ajoutés les éléments.
+// Pour chaque élément de la liste de l’API elle construit: 
+// un lien
+// un article 
+// une image 
+// le nom du produit 
+// la description du produit 
+
+// Besoin précis → construire le html pour avec les informations de l’API
 
 async function main(){
     //liste des produits
