@@ -376,7 +376,7 @@ const regexAddress = (value) => { return  /^[0-9]{5} [A-Za-zÀ-ÖØ-öø-ÿ0-9 ]
 //Regex pour vérifier une ville 
 const regexCity = (value) => { return /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð\ \-]{0,60}$/i.test(value) };
 //Regex pour vérifier un email
-const regexEmail = (value) => { return  /^[a-zA-Z0-9_.+-]+@[\w]+\.[\w]{2,4}$/i.test(value) };
+const regexEmail = (value) => { return  /^[a-zA-Z0-9_.+-]+@[\w-]+\.[\w]{2,4}$/i.test(value) };
 
 // ------------------------------------- ************************************************************* ---------------------------------------
 // ---------- Fonction qui ajoute un id à l'url de la page confirmation et redirige l'utilisateur sur cette page
@@ -487,7 +487,7 @@ function inputchange(locHtml, typeOfData, locError, saidAlert){
     let regexBack;
  
     //ciblage du bon regex
-    locHtml.addEventListener('input', e => {
+    locHtml.addEventListener('change', e => {
         if (typeOfData == "firstName" || typeOfData == "lastName"){
         
             regexBack = regexNames(locHtml.value)
